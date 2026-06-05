@@ -73,7 +73,5 @@
     "linux": {
       "target": "AppImage"
     }
-  },
-  "type": "module"
+  }
 }
-
