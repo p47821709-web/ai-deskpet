@@ -94,7 +94,7 @@ if (-not $DryRun) {
     $oldPattern = '"version": "' + $oldVersion + '"'
     $newPattern = '"version": "' + $Version + '"'
     $newPkg = (Get-Content $PackageJson -Raw) -replace [regex]::Escape($oldPattern), $newPattern
-    Set-Content $PackageJson -Value $newPkg -Encoding UTF8
+        [System.IO.File]::WriteAllText($PackageJson, $newPkg, [System.Text.UTF8Encoding]::new($false))
 
     if ($IS_GIT_REPO) {
         git -C $ROOT_DIR add $PackageJson
