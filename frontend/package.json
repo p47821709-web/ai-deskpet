@@ -1,7 +1,7 @@
 ﻿{
   "name": "ai-deskpet",
   "version": "1.0.0",
-  "description": "AI DeskPet - 浼佷笟绾?AI 妗屽疇鐢熸垚鍣?,
+  "description": "AI DeskPet - Enterprise AI Desktop Pet Generator",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {
