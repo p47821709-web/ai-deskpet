@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "ai-deskpet",
   "version": "1.0.0",
   "description": "AI DeskPet - Enterprise AI Desktop Pet Generator",
@@ -73,7 +73,6 @@
     "linux": {
       "target": "AppImage"
     }
-  }
+  },
+  "type": "module"
 }
-
-
