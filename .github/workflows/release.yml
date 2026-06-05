@@ -1,0 +1,138 @@
+﻿# ── AI DeskPet 发布流水线 ────────────────────────────────────
+# 打标签时自动构建 Windows 安装包并发布到 GitHub Releases
+
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  # ═══════════════════════════════════════════════════════════
+  # 构建 Windows 安装包
+  # ═══════════════════════════════════════════════════════════
+  build-windows:
+    name: Build Windows (x64)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -e .
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npx tsc --noEmit && npx vite build
+        env:
+          NODE_ENV: production
+
+      - name: Build Electron (NSIS installer)
+        working-directory: frontend
+        run: npx electron-builder --config electron-builder.yml --win --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 代码签名证书 (需要先配置)
+          # WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          # WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: frontend/release/*.exe
+
+      - name: Upload portable
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-portable
+          path: frontend/release/*.exe
+
+  # ═══════════════════════════════════════════════════════════
+  # 生成 latest.yml (供 electron-updater 使用)
+  # ═══════════════════════════════════════════════════════════
+  generate-update-meta:
+    name: Generate Update Metadata
+    runs-on: ubuntu-latest
+    needs: build-windows
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate latest.yml
+        run: |
+          echo "version: ${GITHUB_REF_NAME#v}" > latest.yml
+          echo "releaseDate: $(date -u +'%Y-%m-%dT%H:%M:%S.000Z')" >> latest.yml
+          echo "files:" >> latest.yml
+          for f in windows-installer/*.exe; do
+            size=$(stat -c%s "$f")
+            echo "  - url: $f" >> latest.yml
+            echo "    size: $size" >> latest.yml
+          done
+          cat latest.yml
+
+      - name: Upload latest.yml
+        uses: actions/upload-artifact@v4
+        with:
+          name: update-metadata
+          path: latest.yml
+
+  # ═══════════════════════════════════════════════════════════
+  # 创建 GitHub Release
+  # ═══════════════════════════════════════════════════════════
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-windows, generate-update-meta]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate release notes
+        run: |
+          # 从 CHANGELOG.md 提取当前版本的更新日志
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk "/^## /{c++} c==1{print} c>1{exit}" CHANGELOG.md > release-notes.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "AI DeskPet v${{ github.ref_name }}"
+          body_path: release-notes.md
+          files: |
+            windows-installer/*.exe
+            windows-portable/*.exe
+            update-metadata/latest.yml
+          draft: true
+          prerelease: false
