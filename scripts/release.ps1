@@ -165,6 +165,12 @@ if (-not $SkipBuild) {
         }
 
         Log "前端构建完成"
+
+        Log "编译 Electron 主进程..."
+        if (-not $DryRun) {
+            npx tsc -p tsconfig.electron.json
+            CheckLastExitCode
+        }
     }
     finally {
         Pop-Location

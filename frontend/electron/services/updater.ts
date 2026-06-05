@@ -55,7 +55,9 @@ class AppUpdater {
     this._isChecking = true
 
     try {
-      const result = await autoUpdater.checkForUpdates()
+      const raw = await autoUpdater.checkForUpdates()
+      if (!raw) { logger.warn("[AutoUpdater] Empty response"); return }
+      const result = raw
       this._updateInfo = result.updateInfo
 
       if (result.updateInfo.version === app.getVersion()) {

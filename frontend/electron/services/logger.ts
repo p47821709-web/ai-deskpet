@@ -40,15 +40,17 @@ function initializeLogger(): void {
   const logDir = getLogDir()
 
   // ── electron-log 配置 ──
-  log.transports.file.maxSize = LOG_CONFIG.maxSize
-  log.transports.file.maxLogs = LOG_CONFIG.maxFiles
-  log.transports.file.fileName = LOG_CONFIG.fileName
-  log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}'
-  log.transports.console.level = app.isPackaged ? false : LOG_CONFIG.level
-  log.transports.file.level = LOG_CONFIG.level
+  const fileTransport: any = log.transports.file
+  const consoleTransport: any = log.transports.console
+  fileTransport.maxSize = LOG_CONFIG.maxSize
+  fileTransport.maxLogs = LOG_CONFIG.maxFiles
+  fileTransport.fileName = LOG_CONFIG.fileName
+  fileTransport.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}'
+  consoleTransport.level = app.isPackaged ? false : LOG_CONFIG.level
+  fileTransport.level = LOG_CONFIG.level
 
   // 错误日志单独写入
-  log.transports.file.file = (message) => {
+  fileTransport.file = (message: any) => {
     const isError = message.level === 'error' || message.level === 'warn'
     return isError ? LOG_CONFIG.errorFileName : LOG_CONFIG.fileName
   }
