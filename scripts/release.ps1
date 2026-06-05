@@ -188,6 +188,8 @@ Push-Location $FRONTEND_DIR
 
 try {
     Log "运行 electron-builder..."
+        $env:CSC_IDENTITY_AUTO_DISCOVERY = "false"
+        $env:WIN_CSC_LINK = ""
 
     if (-not $DryRun) {
         if ($Channel -eq "stable") {
