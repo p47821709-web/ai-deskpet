@@ -55,6 +55,10 @@ function ConfirmContinue($Message) {
     return $choice -eq 'y' -or $choice -eq 'Y'
 }
 
+# ── Electron 镜像配置 ─────────────────────────────────────────
+$env:ELECTRON_MIRROR = "https://npmmirror.com/mirrors/electron/"
+$env:ELECTRON_CACHE = "$env:LOCALAPPDATA\electron-cache"
+
 # ── 版本校验 ──────────────────────────────────────────────────
 
 LogStep "版本校验"
@@ -112,11 +116,37 @@ if (-not $SkipBuild) {
         Log "安装依赖..."
         if (-not $DryRun) {
             if ($HAS_LOCKFILE) {
-                npm ci
+                npm ci --ignore-scripts
             } else {
-                npm install --no-audit --no-fund
+                npm install --no-audit --no-fund --ignore-scripts
             }
             CheckLastExitCode
+        }
+
+        Log "Electron 二进制修复..."
+        if (-not $DryRun) {
+            $electronDir = Join-Path $FRONTEND_DIR "node_modules\electron"
+            $electronDist = Join-Path $electronDir "dist"
+            $electronExe = Join-Path $electronDist "electron.exe"
+            if ((Test-Path $electronDir) -and -not (Test-Path $electronExe)) {
+                try {
+                    $pkgJson = Join-Path $electronDir "package.json"
+                    $ver = (Get-Content $pkgJson -Raw | ConvertFrom-Json).version
+                    if ($ver) {
+                        $url = "$env:ELECTRON_MIRROR" + "v$ver/electron-v$ver-win32-x64.zip"
+                        $zip = "$env:TEMP\electron-v$ver.zip"
+                        Log "下载 Electron $ver 二进制..."
+                        Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing -TimeoutSec 300
+                        if (-not (Test-Path $electronDist)) { New-Item -ItemType Directory -Path $electronDist -Force | Out-Null }
+                        Expand-Archive -Path $zip -DestinationPath $electronDist -Force
+                        Set-Content -Path (Join-Path $electronDir "path.txt") -Value "electron.exe" -NoNewline
+                        Remove-Item $zip -Force -ErrorAction SilentlyContinue
+                        Log "Electron $ver 二进制安装完成"
+                    }
+                } catch {
+                    Write-Host "  Electron 二进制下载失败: $($_.Exception.Message)" -ForegroundColor Yellow
+                }
+            }
         }
 
         Log "TypeScript 类型检查..."
