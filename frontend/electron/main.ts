@@ -63,7 +63,7 @@ function createPetWindow() {
   })
 
   petWindow.setIgnoreMouseEvents(true)
-  petWindow.loadURL(isDev ? 'http://localhost:5173' : 'file://' + path.join(__dirname, '../dist/index.html'))
+  petWindow.loadURL(isDev ? 'http://localhost:5173/#/pet-overlay' : 'file://' + path.join(__dirname, '../dist/index.html#/pet-overlay'))
 }
 
 function createTray() {
@@ -105,7 +105,7 @@ function setupIPC() {
         nodeIntegration: false,
       },
     })
-    chatWindow.loadURL(isDev ? 'http://localhost:5173/chat/' + petId : 'file://' + path.join(__dirname, '../dist/index.html'))
+    chatWindow.loadURL(isDev ? 'http://localhost:5173/#/chat/' + petId : 'file://' + path.join(__dirname, '../dist/index.html#/chat/' + petId))
     chatWindow.on('closed', () => { chatWindow = null })
   })
 
