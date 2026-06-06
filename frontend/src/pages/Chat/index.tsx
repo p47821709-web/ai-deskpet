@@ -4,6 +4,7 @@ import ChatWindow from './components/ChatWindow'
 import MemoryPanel from './components/MemoryPanel'
 import { ChatService } from '../../services/ChatService'
 import { useMessageStore } from '../../stores/MessageStore'
+import { useSettingsStore } from '@/stores/useSettingsStore'
 
 // ── Chat Page ────────────────────────────────────────────────
 
@@ -15,22 +16,31 @@ export default function ChatPage() {
   const chatServiceRef = useRef<ChatService | null>(null)
   const store = useMessageStore()
 
-  // Initialize ChatService once
+  // 从 SettingsStore 读取 AI 配置
+  const aiProvider = useSettingsStore((s) => s.ai.aiProvider)
+  const aiApiKey = useSettingsStore((s) => s.ai.aiApiKey)
+  const aiApiBase = useSettingsStore((s) => s.ai.aiApiBase)
+  const aiModel = useSettingsStore((s) => s.ai.aiModel)
+
+  // Initialize ChatService once with settings from store
   useEffect(() => {
     if (!chatServiceRef.current) {
       chatServiceRef.current = new ChatService({
-        provider: 'openai',
-        apiKey: localStorage.getItem('ai_api_key') || '',
-        apiBase: localStorage.getItem('ai_api_base') || 'https://api.openai.com/v1',
-        model: localStorage.getItem('ai_model') || 'gpt-4o-mini',
+        provider: (aiProvider as 'openai' | 'deepseek') || 'openai',
+        apiKey: aiApiKey || '',
+        apiBase: aiApiBase || 'https://api.openai.com/v1',
+        model: aiModel || 'gpt-4o-mini',
       })
     }
 
-    // Update petId reference when it changes
-    return () => {
-      // Don't destroy on unmount — keeps history across navigations
-    }
-  }, [petId])
+    // 当 AI 配置变化时更新 ChatService
+    chatServiceRef.current.updateConfig({
+      provider: (aiProvider as 'openai' | 'deepseek') || 'openai',
+      apiKey: aiApiKey || '',
+      apiBase: aiApiBase || 'https://api.openai.com/v1',
+      model: aiModel || 'gpt-4o-mini',
+    })
+  }, [petId, aiProvider, aiApiKey, aiApiBase, aiModel])
 
   const handleSendMessage = useCallback(
     (content: string) => {
@@ -98,4 +108,3 @@ export default function ChatPage() {
     </div>
   )
 }
-
