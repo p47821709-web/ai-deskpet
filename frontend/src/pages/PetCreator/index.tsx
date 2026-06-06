@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button'
 import ImageUploader from './components/ImageUploader'
 import CropPreview from './components/CropPreview'
 import StyleSelector from './components/StyleSelector'
+import GenerationPreview from './components/GenerationPreview'
 import { generatePixelArt, type UploadResult, type GenerateResult } from '@/services/api/generationApi'
 import { petApi } from '@/services/api/petApi'
+import { ipcBridge } from '@/services/ipc-bridge'
 
 export default function PetCreator() {
   const [file, setFile] = useState<File | null>(null)
@@ -17,6 +19,9 @@ export default function PetCreator() {
   const [genState, setGenState] = useState<'idle' | 'generating' | 'success' | 'error'>('idle')
   const [genResult, setGenResult] = useState<GenerateResult | null>(null)
   const [genError, setGenError] = useState('')
+
+  // 召唤状态
+  const [spawning, setSpawning] = useState(false)
 
   const handleFileSelected = useCallback((selectedFile: File, url: string) => {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
@@ -73,7 +78,6 @@ export default function PetCreator() {
           pixel_size: result.pixel_size,
         })
       } catch (createErr) {
-        // 创建失败不影响用户体验
         console.warn('[PetCreator] Failed to create pet record:', createErr)
       }
     } catch (err: any) {
@@ -83,6 +87,19 @@ export default function PetCreator() {
       console.error('[PetCreator] Generation failed:', msg)
     }
   }, [uploadResult, style])
+
+  const handleSpawnToDesktop = useCallback((_imageUrl: string) => {
+    setSpawning(true)
+    try {
+      // 通过 IPC 通知主进程创建桌宠窗口
+      ipcBridge.spawnPet('default')
+      console.log('[PetCreator] Spawn pet to desktop')
+    } catch (err) {
+      console.error('[PetCreator] Failed to spawn pet:', err)
+    } finally {
+      setSpawning(false)
+    }
+  }, [])
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
@@ -173,6 +190,17 @@ export default function PetCreator() {
         </div>
       </div>
 
+      {/* Generation result */}
+      {genResult && (
+        <div className="max-w-sm mx-auto">
+          <GenerationPreview
+            result={genResult}
+            onSpawnToDesktop={handleSpawnToDesktop}
+            spawning={spawning}
+          />
+        </div>
+      )}
+
       {/* Action */}
       <div className="flex justify-end pt-4 border-t border-border">
         {genState === 'success' ? (
@@ -206,27 +234,6 @@ export default function PetCreator() {
       {genState === 'error' && genError && (
         <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-4 text-sm text-destructive">
           {genError}
-        </div>
-      )}
-
-      {/* 生成结果预览 */}
-      {genResult && (
-        <div className="rounded-xl border border-border bg-muted/20 p-6 space-y-4">
-          <h3 className="font-semibold flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-green-500" />
-            生成结果
-          </h3>
-          {genResult.generated_image_url && (
-            <img
-              src={genResult.generated_image_url}
-              alt="生成的像素桌宠"
-              className="max-w-xs rounded-lg border border-border"
-            />
-          )}
-          <div className="text-xs text-muted-foreground space-y-1">
-            <p>像素尺寸: {genResult.pixel_size}x{genResult.pixel_size}</p>
-            <p>AI 模型: {genResult.provider} / {genResult.model}</p>
-          </div>
         </div>
       )}
     </div>

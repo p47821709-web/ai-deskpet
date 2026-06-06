@@ -81,3 +81,4 @@ export interface GenerationStatus {
   status: string
   progress: number
 }
+
