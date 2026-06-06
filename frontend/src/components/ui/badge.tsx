@@ -12,4 +12,4 @@ export const Badge = ({ className, variant = 'default', ...props }: BadgeProps) 
     'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80': variant === 'destructive',
     'text-foreground': variant === 'outline',
   }, className)} {...props} />
-))
+)

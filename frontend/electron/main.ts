@@ -1,6 +1,16 @@
 ﻿import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from 'electron'
 import path from 'path'
 
+
+// ── Global Error Handlers ──────────────────────────────────
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] Uncaught Exception:', err.message, err.stack)
+  if (app.isPackaged) app.exit(1)
+})
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[FATAL] Unhandled Rejection:', reason)
+})
 let mainWindow: BrowserWindow | null = null
 let petWindow: BrowserWindow | null = null
 let chatWindow: BrowserWindow | null = null

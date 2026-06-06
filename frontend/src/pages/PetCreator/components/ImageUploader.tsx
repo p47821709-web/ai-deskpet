@@ -51,7 +51,7 @@ export default function ImageUploader({
       if (!isFileSizeValid(file)) {
         const err: ValidationError = {
           type: 'size',
-          message: '文件大小超过限制（最大 ' + str(MAX_FILE_SIZE_MB) + 'MB）',
+          message: '文件大小超过限制（最大 ' + String(MAX_FILE_SIZE_MB) + 'MB）',
         }
         setError(err)
         return
@@ -204,7 +204,7 @@ export default function ImageUploader({
             {isDragging ? "释放鼠标以上传" : "点击上传或拖拽图片到这里"}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {"支持 PNG、JPG、JPEG、WebP 格式，最大 " + str(MAX_FILE_SIZE_MB) + "MB"}
+            {"支持 PNG、JPG、JPEG、WebP 格式，最大 " + String(MAX_FILE_SIZE_MB) + "MB"}
           </p>
         </div>
       </div>

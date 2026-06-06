@@ -30,8 +30,8 @@ export default function CropPreview({ file, previewUrl }: CropPreviewProps) {
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-medium">图片预览</h4>
         <span className="text-xs text-muted-foreground">
-          {file.width && file.height
-            ? file.width + ' × ' + file.height
+          {(file as any).width && (file as any).height
+            ? (file as any).width + ' × ' + (file as any).height
             : ''}
           {' · ' + formatFileSize(file.size)}
         </span>

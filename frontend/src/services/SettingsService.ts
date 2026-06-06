@@ -269,7 +269,7 @@ class SettingsServiceClass {
       if (val !== undefined && typeof val === 'object' && !Array.isArray(val) && val !== null) {
         result[key] = this._mergeDeep(result[key] as any, val as any)
       } else if (val !== undefined) {
-        result[key] = val
+        result[key] = val as any
       }
     }
     return result

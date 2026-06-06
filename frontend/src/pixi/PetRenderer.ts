@@ -108,17 +108,10 @@ export class PetRenderer {
     if (this._initialized) return
 
     // Initialize PixiJS
-    await this._app.init({
-      width: container.clientWidth,
-      height: container.clientHeight,
-      backgroundColor: this._config.backgroundColor,
-      backgroundAlpha: 0,
-      antialias: false,
-      resolution: window.devicePixelRatio || 1,
-      autoDensity: true,
-    })
+    // PixiJS initialized via constructor
+    this._app.renderer.resize(container.clientWidth, container.clientHeight)
 
-    container.appendChild(this._app.canvas as HTMLCanvasElement)
+    container.appendChild(this._app.view as HTMLCanvasElement)
 
     // Set up stage
     this._app.stage.eventMode = 'static'
