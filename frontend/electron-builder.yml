@@ -1,4 +1,4 @@
-# ── Electron Builder 生产配置 ──────────────────────────────────
+# ── Electron Builder 生产配置 ────────────────────────────────────
 # 用于 Windows 安装包构建、代码签名、自动更新
 
 appId: com.aideskpet.app
@@ -54,19 +54,19 @@ nsis:
     - zh_CN
     - en_US
   uninstallDisplayName: "AI DeskPet ${version}"
+  installerSidebar: null
+  include: "build/installer.nsh"
 
 portable:
   artifactName: "AI-DeskPet-${version}-portable-${arch}.${ext}"
 
 publish:
-  - provider: generic
-    url: https://releases.aideskpet.com
-    channel: latest
   - provider: github
-    owner: your-org
+    owner: p47821709-web
     repo: ai-deskpet
     releaseType: release
     vPrefixedTagName: true
+    private: false
 
 compression: maximum
 removePackageScripts: true

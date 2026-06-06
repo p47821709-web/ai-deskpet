@@ -10,6 +10,8 @@
 6. [发布流程](#发布流程)
 7. [版本管理](#版本管理)
 8. [代码签名](#代码签名)
+9. [中国网络优化](#中国网络优化)
+10. [故障排查](#故障排查)
 
 ---
 
@@ -59,7 +61,13 @@ npm run electron:dev
 
 ```bash
 cd frontend
-npm run build
+# 编译 Electron 主进程
+npx tsc -p tsconfig.electron.json
+
+# 构建前端
+npx vite build
+
+# 打包
 npx electron-builder --config electron-builder.yml --win --x64
 ```
 
@@ -67,9 +75,9 @@ npx electron-builder --config electron-builder.yml --win --x64
 
 ```
 release/
-  AI-DeskPet-1.0.0-x64.exe       # NSIS 安装包
-  AI-DeskPet-1.0.0-portable-x64.exe  # 便携版
-  latest.yml                      # 自动更新元数据
+  AI-DeskPet-1.0.0-x64.exe                 # NSIS 安装包
+  AI-DeskPet-1.0.0-portable-x64.exe        # 便携版
+  latest.yml                                # 自动更新元数据
 ```
 
 ---
@@ -80,7 +88,7 @@ release/
 
 ```
 ┌─────────────┐    检查更新     ┌──────────────┐
-│  Electron   │ ──────────────> │  GitHub/CDN  │
+│  Electron   │ ──────────────> │  GitHub / CDN│
 │   App       │ <────────────── │  Releases    │
 │             │   latest.yml    │              │
 │             │                 │  *.exe       │
@@ -89,108 +97,60 @@ release/
 └─────────────┘                 └──────────────┘
 ```
 
-### 配置步骤
+### 配置说明
 
-1. **服务端配置**（二选一）
+当前项目使用 **GitHub Releases** 作为更新服务器：
 
-   **方案 A: GitHub Releases（推荐）**
-   - 推送标签时自动创建 Release
-   - `electron-updater` 通过 GitHub API 检查更新
-   - 无需额外服务器
+- **electron-builder.yml** 中已配置 `publish.github` 指向 `p47821709-web/ai-deskpet`
+- **electron/services/updater.ts** 实现了完整的更新逻辑
+- 启动后 10 秒检查更新，之后每 4 小时自动检查
+- 发现更新时弹出对话框，支持后台下载 + 安装提示
 
-   **方案 B: 自建更新服务器**
-   - 将 `latest.yml` + `.exe` 部署到 CDN
-   - 配置 `electron-builder.yml` 中的 `publish.url`
-   - 示例 Nginx 配置：
+### GitHub Actions 自动发布
 
-   ```nginx
-   server {
-       listen 443 ssl;
-       server_name releases.aideskpet.com;
+推送 `v*.*.*` 标签时触发：
 
-       root /var/www/releases;
-       autoindex off;
+1. GitHub Actions 在 Windows runner 上构建
+2. 生成 NSIS 安装包 + Portable 便携版 + latest.yml
+3. 自动上传到 GitHub Releases（draft 草稿状态）
+4. 人工审核后发布 Release
 
-       location ~ \.exe$ {
-           add_header Cache-Control "public, max-age=3600";
-       }
+### 手动更新部署
 
-       location /latest.yml {
-           add_header Cache-Control "no-cache";
-       }
-   }
-   ```
+如需自建更新服务器：
 
-2. **客户端配置**
-
-   更新服务已在 `electron/services/updater.ts` 中实现：
-   - 启动后 10 秒自动检查
-   - 每隔 4 小时自动检查
-   - 发现更新时弹出对话框
-   - 后台下载 + 安装提示
-
-### 更新验证流程
-
-```
-发现新版本 v1.2.0
-  │
-  ├─ 用户选择"立即更新"
-  │     │
-  │     ├─ 后台下载进度提示
-  │     │
-  │     ├─ 下载完成
-  │     │     │
-  │     │     ├─ 询问"立即重启？"
-  │     │     │   ├─ 是 → quitAndInstall()
-  │     │     │   └─ 否 → 下次启动时安装
-  │     │
-  │     └─ 下载失败 → 提示重试
-  │
-  └─ 用户选择"稍后再说"
-        └─ 下次检查时再次提示
-```
+1. 将 `latest.yml` + `.exe` 部署到 CDN
+2. 修改 `electron-builder.yml` 中的 `publish` 配置
 
 ---
 
 ## 错误日志
 
-### 日志系统架构
+### 日志系统
 
-```
-App 运行
-  │
-  ├─ Main Process
-  │     ├─ electron-log (文件)
-  │     │     ├─ deskpet.log          (所有日志)
-  │     │     └─ deskpet-error.log    (仅 error/warn)
-  │     │
-  │     └─ console (开发环境)
-  │
-  └─ Renderer Process
-        ├─ console.log → 通过 IPC 发送到主进程
-        └─ window.onerror → 自动捕获未处理异常
-```
+使用 `electron-log` 实现：
+
+| 文件 | 内容 | 轮转 |
+|------|------|------|
+| `deskpet.log` | 所有日志 (info/warn/error) | 5 MB，保留 7 个 |
+| `deskpet-error.log` | 仅 error/warn | 5 MB，保留 7 个 |
 
 ### 日志位置
 
-| 平台 | 路径 |
+| 环境 | 路径 |
 |------|------|
-| Windows | `%APPDATA%/AI DeskPet/logs/` |
-| 开发环境 | `./logs/` |
+| 生产 (Windows) | `%APPDATA%/AI DeskPet/logs/` |
+| 开发 | `./logs/` (项目根目录) |
 
-### 日志文件管理
+### 全局异常捕获
 
-- **文件大小**: 5 MB 轮转
-- **保留数量**: 最近 7 个文件
-- **日志级别**:
-  - 生产: `info` (error/warn/info)
-  - 开发: `debug` (全部)
+- `unhandledRejection` → 自动记录到 error 日志
+- `uncaughtException` → 记录并优雅退出（生产环境）
+- Renderer 进程错误 → 通过 IPC 发送到主进程记录
 
-### 用户上报
+### 用户导出日志
 
-1. 在设置页面添加"导出日志"按钮
-2. 将 `deskpet-error.log` 打包
-3. 上传到技术支持
+设置页面 → 帮助 → 导出日志 (将 `deskpet-error.log` 打包)
 
 ---
 
@@ -199,127 +159,197 @@ App 运行
 ### 完整发布步骤
 
 ```bash
-# 1. 确保 develop 分支代码就绪
+# 1. 从 develop 创建 release 分支
 git checkout develop
 git pull
-
-# 2. 创建 release 分支
 git checkout -b release/1.2.0
 
-# 3. 执行发布脚本
+# 2. 执行发布脚本
 .\scripts\release.ps1 -Version 1.2.0
 
-# 4. 脚本自动执行:
+# 3. 脚本自动执行:
 #    - 更新 package.json 版本号
 #    - 运行 TypeScript 类型检查
 #    - 执行 Vite 生产构建
 #    - 运行 electron-builder 打包
 #    - 创建 git tag
-#    - 推送至 GitHub
+#    - 推送标签到远程
 
-# 5. GitHub Actions 自动:
-#    - 构建 Windows 安装包
-#    - 生成 latest.yml 更新元数据
-#    - 创建 GitHub Release (draft)
-
-# 6. 手动:
-#    - 测试安装包
-#    - 补充 Release Notes
-#    - 发布 Release
+# 4. 合并到 main
+git checkout main
+git merge --no-ff release/1.2.0
+git tag v1.2.0
+git push origin main --tags
 ```
 
-### 发布清单
+### 发布渠道
 
-每次发布前检查:
+| 渠道 | 标签后缀 | 用途 |
+|------|----------|------|
+| stable | `v1.0.0` | 正式版 |
+| beta | `v1.1.0-beta.1` | 测试版 |
+| alpha | `v1.2.0-alpha.1` | 内部测试 |
 
-- [ ] 所有测试通过
-- [ ] CHANGELOG.md 已更新
-- [ ] 版本号已正确更新
-- [ ] 代码签名证书有效
-- [ ] 构建产物体积合理
-- [ ] 安装包在新系统上测试通过
-- [ ] 自动更新功能测试通过
-- [ ] 后端 API 兼容性确认
+### CI/CD 自动发布
+
+```bash
+# 推送标签即可触发 GitHub Actions
+git tag v1.2.0
+git push origin v1.2.0
+# → 自动构建并上传到 GitHub Releases (draft)
+# → 人工审核发布
+```
 
 ---
 
 ## 版本管理
 
-### 版本号规则
+遵循 Semantic Versioning 2.0：
 
 ```
-X.Y.Z[-PRERELEASE]
+主版本.次版本.补丁 (-预发布)
+  1.     2.     3   (-beta.1)
 ```
 
-| 部分 | 说明 | 示例 |
-|------|------|------|
-| X | 主版本 — 不兼容 API 变更 | `2.0.0` |
-| Y | 次版本 — 向下兼容新功能 | `1.3.0` |
-| Z | 补丁 — 向下兼容 bug 修复 | `1.2.1` |
-| PRERELEASE | 预发布标识 | `1.2.3-beta.1` |
-
-### 分支模型
+分支策略：
 
 ```
-main ────────────── 仅接受 release 合并
-  │
-release/1.2.0 ───── 从 develop 拉出，只修 bug
-  │
-develop ──────────── 日常开发
-  │
-feature/* ────────── 新功能
-fix/* ────────────── 缺陷修复
-```
-
-### 标签命名
-
-```
-v1.2.0        # 正式版
-v1.2.3-beta.1  # 预发布版
+main          生产就绪
+develop       日常开发
+release/*     发布分支
+feature/*     功能分支
+fix/*         修复分支
 ```
 
 ---
 
 ## 代码签名
 
-Windows 安装包签名是**强烈推荐**的步骤，可避免 SmartScreen 拦截。
+### 证书选择
 
-### 获取证书
-
-| 类型 | 价格 | 有效期 | 适用场景 |
-|------|------|--------|----------|
+| 类型 | 年费 | 有效期 | 说明 |
+|------|------|--------|------|
 | EV 证书 | ~$300/年 | 1-3 年 | 企业发布，立即获得信任 |
 | Standard | ~$200/年 | 1-3 年 | 个人/小团队，需建立信任 |
-
-推荐提供商: DigiCert, Sectigo, Let\'s Encrypt (不支持代码签名)
 
 ### 配置签名
 
 ```bash
-# 1. 将 .pfx 证书文件放到安全位置
-
-# 2. 设置环境变量
+# 设置环境变量
 $env:WIN_CSC_LINK = "C:\cert\my-cert.pfx"
 $env:WIN_CSC_KEY_PASSWORD = "your-cert-password"
 
-# 3. electron-builder 自动签名
+# electron-builder 打包时自动签名
 npx electron-builder --config electron-builder.yml --win --x64
 ```
 
-### GitHub Actions 中使用
+### GitHub Actions 配置
 
-在仓库 Settings → Secrets and variables → Actions 中配置:
+在仓库 Settings → Secrets and variables → Actions 中配置：
 
 | Secret | 说明 |
 |--------|------|
 | `WIN_CSC_LINK` | Base64 编码的 .pfx 证书 |
 | `WIN_CSC_KEY_PASSWORD` | 证书密码 |
 
-Base64 编码证书:
+当前未配置代码签名（`CSC_IDENTITY_AUTO_DISCOVERY=false`），安装包在 Windows SmartScreen 中会显示"未知发布者"。
+
+---
+
+## 中国网络优化
+
+### npm 镜像配置
+
+已在 `frontend/.npmrc` 中配置：
+
+```
+registry=https://registry.npmmirror.com
+```
+
+### Electron 镜像配置
+
+已在 `electron-builder.yml` 中配置：
+
+```yaml
+electronDownload:
+  mirror: https://npmmirror.com/mirrors/electron/
+```
+
+### electron-builder 二进制镜像
+
+构建时需要设置环境变量：
 
 ```bash
-certutil -encode my-cert.pfx cert-base64.txt
-# 将 cert-base64.txt 内容复制到 GitHub Secret
+$env:ELECTRON_BUILDER_BINARIES_MIRROR = "https://npmmirror.com/mirrors/electron-builder-binaries/"
+```
+
+### GitHub Actions 环境变量
+
+已在 `.github/workflows/release.yml` 中配置：
+
+```yaml
+env:
+  ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+  ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
+```
+
+### 常见网络问题
+
+| 问题 | 解决方案 |
+|------|----------|
+| npm install 卡在 node:electron 安装脚本 | 配置 `ELECTRON_MIRROR` 后重试 |
+| electron-builder 下载 winCodeSign 失败 | 配置 `ELECTRON_BUILDER_BINARIES_MIRROR` |
+| GitHub Actions 下载缓慢 | GitHub Actions 服务器在海外，第一次构建可能需要 10-20 分钟 |
+| electron-builder 7z 解压错误 | 手动下载 winCodeSign 7z 并放入缓存目录 |
+
+---
+
+## 故障排查
+
+### 构建失败
+
+```
+问题: npm install 时报错 EBUSY / EPERM
+解决:
+  1. 关闭所有编辑器/终端中打开的项目文件
+  2. 删除 node_modules: Remove-Item -Recurse -Force node_modules
+  3. 清除 npm 缓存: npm cache clean --force
+  4. 重试
+```
+
+```
+问题: electron-builder 报错 "exit code 2" (7z 解压)
+解决:
+  1. 手动下载 winCodeSign 到缓存目录
+  2. 删除 7z 中的 darwin/linux 目录
+  3. 参考 frontend/build/README.md
+```
+
+### 安装包无法启动
+
+```
+问题: 安装后应用无法打开 / 缺失 DLL
+解决: 安装 Visual C++ Redistributable 2015-2022
+```
+
+### 自动更新失败
+
+```
+问题: Check for update 返回 404
+排查:
+  1. 确认 latest.yml 存在且可访问
+  2. 确认版本号高于当前版本
+  3. 检查 GitHub Release 是否为 "published" 状态
+  4. 查看日志: %APPDATA%/AI DeskPet/logs/deskpet.log
+```
+
+### 日志取证
+
+```bash
+# Windows
+type "%APPDATA%\AI DeskPet\logs\deskpet-error.log"
+
+# 设置页面 → 帮助 → 导出日志
 ```
 
 ---
@@ -365,32 +395,32 @@ certutil -encode my-cert.pfx cert-base64.txt
 
 ---
 
-## 故障排查
+## electron-builder.yml 当前配置
 
-### 安装失败
-
-```
-问题: 安装包无法启动 / 缺失 DLL
-解决: 安装 Visual C++ Redistributable 2015-2022
-```
-
-### 自动更新失败
-
-```
-问题: Check for update 返回 404
-排查:
-  1. 确认 latest.yml 存在且可访问
-  2. 确认版本号高于当前版本
-  3. 检查 GitHub Release 是否为 "published" 状态
-  4. Electron 日志: %APPDATA%/AI DeskPet/logs/deskpet.log
+```yaml
+appId: com.aideskpet.app
+productName: AI DeskPet
+target: NSIS + Portable (x64)
+publish: GitHub Releases (p47821709-web/ai-deskpet)
+icon: resources/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  language: 2052 (简体中文)
+  multiLanguageInstaller: true
+electronDownload:
+  mirror: https://npmmirror.com/mirrors/electron/
 ```
 
-### 日志取证
+---
 
-```bash
-# Windows
-type "%APPDATA%\AI DeskPet\logs\deskpet-error.log"
+## 发布检查清单
 
-# 导出日志供技术支持
-# 设置页面 → 帮助 → 导出日志
-```
+- [ ] CHANGELOG.md 已更新
+- [ ] package.json version 已更新
+- [ ] 代码已在 release 分支上
+- [ ] GitHub Actions 标签已推送
+- [ ] Release 从 draft 转为 published
+- [ ] 安装包在 Windows 测试机上验证
+- [ ] 自动更新功能正常
+- [ ] 错误日志能正常生成
