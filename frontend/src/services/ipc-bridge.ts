@@ -6,30 +6,9 @@
  * 完全兼容 contextIsolation: true + nodeIntegration: false。
  */
 
-// ── 类型定义 ────────────────────────────────────────────────
-
-interface ElectronAPI {
-  spawnPet: (petId: string) => void
-  recallPet: () => void
-  updatePosition: (x: number, y: number) => void
-  openChat: (petId: string) => void
-  minimizeToTray: () => void
-  quitApp: () => void
-  getVersion: () => Promise<string>
-  setAutoLaunch: (enabled: boolean) => Promise<void>
-  getAutoLaunch: () => Promise<boolean>
-  on: (channel: string, callback: (...args: any[]) => void) => void
-}
-
-declare global {
-  interface Window {
-    electronAPI?: ElectronAPI
-  }
-}
-
 // ── 安全获取 electronAPI ─────────────────────────────────────
 
-function getAPI(): ElectronAPI | null {
+function getAPI() {
   if (typeof window !== 'undefined' && window.electronAPI) {
     return window.electronAPI
   }
@@ -38,7 +17,7 @@ function getAPI(): ElectronAPI | null {
 
 // ── IPC Bridge 单例 ─────────────────────────────────────────
 
-export const ipcBridge: Partial<ElectronAPI> = {
+export const ipcBridge = {
   spawnPet: (petId: string) => {
     const api = getAPI()
     if (api?.spawnPet) api.spawnPet(petId)

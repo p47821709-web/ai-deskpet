@@ -2,7 +2,8 @@
 
 declare global {
   interface Window {
-    electronAPI: {
+    /** Electron 主进程通过 preload.ts 暴露的 IPC API */
+    electronAPI?: {
       spawnPet: (petId: string) => void
       recallPet: () => void
       updatePosition: (x: number, y: number) => void
