@@ -1,4 +1,4 @@
-﻿import { useMessageStore, type Message, type StreamChunk } from '../stores/MessageStore'
+import { useMessageStore, type Message, type StreamChunk } from '../stores/MessageStore'
 
 // ── Types ────────────────────────────────────────────────────
 

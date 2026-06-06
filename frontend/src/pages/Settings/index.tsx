@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import GeneralSettings from './components/GeneralSettings'

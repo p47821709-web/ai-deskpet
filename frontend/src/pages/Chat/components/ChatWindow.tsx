@@ -1,4 +1,4 @@
-﻿import React, { useRef, useEffect, useCallback } from 'react'
+import React, { useRef, useEffect, useCallback } from 'react'
 import { useMessageStore } from '../../../stores/MessageStore'
 import ChatBubble from './ChatBubble'
 import ChatInput from './ChatInput'

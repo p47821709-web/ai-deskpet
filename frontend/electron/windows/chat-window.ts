@@ -1,4 +1,4 @@
-﻿import { BrowserWindow } from 'electron'
+import { BrowserWindow } from 'electron'
 import path from 'path'
 
 export function createChatWindow(petId: string): BrowserWindow {

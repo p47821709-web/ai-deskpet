@@ -1,4 +1,4 @@
-﻿/**
+/**
  * IPC Bridge — Electron 渲染进程与主进程通信桥接
  *
  * 通过 preload.ts 暴露的 window.electronAPI 进行通信。

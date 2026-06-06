@@ -1,4 +1,4 @@
-﻿import { globalShortcut } from 'electron'
+import { globalShortcut } from 'electron'
 
 export function registerShortcuts() {
   globalShortcut.register('CommandOrControl+Shift+P', () => {

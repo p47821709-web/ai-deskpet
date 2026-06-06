@@ -1,4 +1,4 @@
-﻿import { ipcMain, app } from 'electron'
+import { ipcMain, app } from 'electron'
 
 export function registerAutoLaunchIPC() {
   ipcMain.handle('set-auto-launch', async (_event, enable: boolean) => {

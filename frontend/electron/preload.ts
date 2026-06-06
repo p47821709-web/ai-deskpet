@@ -1,4 +1,4 @@
-﻿﻿﻿import { contextBridge, ipcRenderer } from 'electron'
+﻿import { contextBridge, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('electronAPI', {
   spawnPet: (petId: string) => ipcRenderer.send('spawn-pet', petId),

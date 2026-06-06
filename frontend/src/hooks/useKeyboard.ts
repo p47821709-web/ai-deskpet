@@ -1,4 +1,4 @@
-﻿import { useEffect } from 'react'
+import { useEffect } from 'react'
 
 export function useKeyboard(keyMap: Record<string, () => void>) {
   useEffect(() => {

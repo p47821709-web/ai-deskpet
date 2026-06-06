@@ -1,4 +1,4 @@
-﻿import apiClient from './client'
+import apiClient from './client'
 
 export const chatApi = {
   createSession: (petId: string) => apiClient.post('/chat/sessions', { pet_id: petId }),

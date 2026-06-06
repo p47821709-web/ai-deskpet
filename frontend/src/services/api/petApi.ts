@@ -1,4 +1,4 @@
-﻿import apiClient from './client'
+import apiClient from './client'
 
 export const petApi = {
   list: (params?: any) => apiClient.get('/pets', { params }),

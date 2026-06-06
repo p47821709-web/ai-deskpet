@@ -1,4 +1,4 @@
-﻿export function useAnimationEngine() {
+export function useAnimationEngine() {
   return {
     play: (anim: string) => {},
     stop: () => {},

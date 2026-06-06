@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { CheckCircle, Sparkles, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { GenerateResult } from '@/services/api/generationApi'

@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import MainLayout from './layouts/MainLayout'
 import PetOverlayLayout from './layouts/PetOverlayLayout'

@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import { ArrowRight, Wand2, Loader2, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ImageUploader from './components/ImageUploader'

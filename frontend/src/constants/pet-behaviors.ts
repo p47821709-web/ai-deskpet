@@ -1,4 +1,4 @@
-﻿export const BEHAVIOR_INTERVALS = {
+export const BEHAVIOR_INTERVALS = {
   IDLE_MIN_MS: 3000,
   IDLE_MAX_MS: 10000,
   WALK_CHANCE: 0.3,

@@ -1,4 +1,4 @@
-﻿export interface PetAnimation {
+export interface PetAnimation {
   id: string
   petId: string
   animationType: 'idle' | 'walk' | 'jump' | 'sleep' | 'talk' | 'happy' | 'sad'

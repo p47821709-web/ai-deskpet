@@ -1,16 +1,25 @@
-﻿import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from 'electron'
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from 'electron'
 import path from 'path'
 
+// ── Import Electron 子模块 ──────────────────────────────────
+import { logger } from './services/logger'
+import { registerUpdaterIPC } from './ipc/updater'
+import { registerAutoLaunchIPC } from './ipc/auto-launch'
+import { registerScreenshotIPC } from './ipc/screenshot'
+import { appUpdater } from './services/updater'
 
 // ── Global Error Handlers ──────────────────────────────────
 process.on('uncaughtException', (err) => {
   console.error('[FATAL] Uncaught Exception:', err.message, err.stack)
+  logger.error('[FATAL] Uncaught Exception:', err.message, err.stack)
   if (app.isPackaged) app.exit(1)
 })
 
 process.on('unhandledRejection', (reason) => {
   console.error('[FATAL] Unhandled Rejection:', reason)
+  logger.error('[FATAL] Unhandled Rejection:', reason)
 })
+
 let mainWindow: BrowserWindow | null = null
 let petWindow: BrowserWindow | null = null
 let chatWindow: BrowserWindow | null = null
@@ -126,19 +135,22 @@ function setupIPC() {
 
   ipcMain.handle('get-version', () => app.getVersion())
 
-  ipcMain.handle('set-auto-launch', async (_event, enable: boolean) => {
-    app.setLoginItemSettings({ openAtLogin: enable })
-  })
-
-  ipcMain.handle('get-auto-launch', () => {
-    return app.getLoginItemSettings().openAtLogin
-  })
+  // 子模块 IPC 注册
+  registerAutoLaunchIPC()
+  registerScreenshotIPC()
+  registerUpdaterIPC()
 }
 
 app.whenReady().then(() => {
+  // 初始化日志系统
+  logger.init()
+
   createMainWindow()
   createTray()
   setupIPC()
+
+  // 初始化自动更新
+  appUpdater.initialize(mainWindow!)
 })
 
 app.on('window-all-closed', () => {

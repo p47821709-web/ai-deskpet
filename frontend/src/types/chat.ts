@@ -1,4 +1,4 @@
-﻿export interface ChatMessage {
+export interface ChatMessage {
   id: string
   petId: string
   sessionId: string

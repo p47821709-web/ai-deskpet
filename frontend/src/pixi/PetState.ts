@@ -1,4 +1,4 @@
-﻿
+
 export type PetAction =
   | 'stand'
   | 'walk'

@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useCallback, type KeyboardEvent } from 'react'
+import React, { useState, useRef, useCallback, type KeyboardEvent } from 'react'
 
 interface ChatInputProps {
   onSend: (content: string) => void

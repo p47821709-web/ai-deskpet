@@ -1,4 +1,4 @@
-﻿import apiClient from './client'
+import apiClient from './client'
 
 /** 上传图片到后端，返回文件 URL */
 export async function uploadImage(

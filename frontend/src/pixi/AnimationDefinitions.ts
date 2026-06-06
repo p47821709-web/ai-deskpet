@@ -1,4 +1,4 @@
-﻿export const ANIMATION_DEFINITIONS = {
+export const ANIMATION_DEFINITIONS = {
   idle_blink: { frames: 2, duration: 150 },
   idle_look: { frames: 4, duration: 200 },
   walk: { frames: 4, duration: 180, loop: true },

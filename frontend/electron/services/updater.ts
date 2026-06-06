@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AutoUpdater — 自动更新服务
  *
  * 基于 electron-updater 实现，支持：

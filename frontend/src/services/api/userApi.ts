@@ -1,4 +1,4 @@
-﻿import apiClient from './client'
+import apiClient from './client'
 
 export const userApi = {
   register: (deviceId: string) => apiClient.post('/users/register', { device_id: deviceId }),

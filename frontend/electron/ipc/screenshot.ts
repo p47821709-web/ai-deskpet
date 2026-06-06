@@ -1,4 +1,4 @@
-﻿import { ipcMain, desktopCapturer } from 'electron'
+import { ipcMain, desktopCapturer } from 'electron'
 
 export function registerScreenshotIPC() {
   ipcMain.handle('take-screenshot', async () => {

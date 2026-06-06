@@ -1,4 +1,4 @@
-﻿export function useElectronIpc() {
+export function useElectronIpc() {
   return {
     spawnPet: (petId: string) => {},
     recallPet: () => {},

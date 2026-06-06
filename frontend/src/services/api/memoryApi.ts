@@ -1,4 +1,4 @@
-﻿import apiClient from './client'
+import apiClient from './client'
 
 export const memoryApi = {
   list: (petId: string, params?: any) => apiClient.get('/memories', { params: { pet_id: petId, ...params } }),

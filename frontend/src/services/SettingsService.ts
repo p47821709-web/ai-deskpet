@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SettingsService — 设置中心持久化服务
  *
  * 将所有配置保存到 localStorage。

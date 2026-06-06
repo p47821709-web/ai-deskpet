@@ -1,4 +1,4 @@
-﻿import { ipcMain } from 'electron'
+import { ipcMain } from 'electron'
 
 export class SystemMonitor {
   private interval: ReturnType<typeof setInterval> | null = null

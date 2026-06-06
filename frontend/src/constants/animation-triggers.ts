@@ -1,4 +1,4 @@
-﻿export const ANIMATION_TRIGGERS = {
+export const ANIMATION_TRIGGERS = {
   IDLE: ['blink', 'look_around', 'stretch'],
   INTERACTION: ['wave', 'jump', 'spin'],
   EMOTION: {

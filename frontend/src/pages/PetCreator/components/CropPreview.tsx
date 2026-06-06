@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { Image as ImageIcon } from 'lucide-react'
 import { formatFileSize } from '@/utils/validators'
 

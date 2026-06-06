@@ -1,4 +1,4 @@
-﻿export function usePetOverlay() {
+export function usePetOverlay() {
   return {
     isVisible: false,
     show: () => {},

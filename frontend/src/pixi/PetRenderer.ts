@@ -1,4 +1,4 @@
-﻿import * as PIXI from 'pixi.js'
+import * as PIXI from 'pixi.js'
 import { PetState, PetStateType, type PetAction } from './PetState'
 import { PetAnimation, DEFAULT_CLIPS, STATE_TO_ANIMATION, type AnimationClip, type AnimationPlayOptions } from './PetAnimation'
 import { PetActionManager, type InteractionType } from './PetActionManager'

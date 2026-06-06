@@ -1,4 +1,4 @@
-﻿export interface Memory {
+export interface Memory {
   id: string
   petId: string
   userId: string

@@ -1,4 +1,4 @@
-﻿import { BrowserWindow, screen } from 'electron'
+import { BrowserWindow, screen } from 'electron'
 
 export function getCenterPosition(): { x: number; y: number } {
   const cursor = screen.getCursorScreenPoint()

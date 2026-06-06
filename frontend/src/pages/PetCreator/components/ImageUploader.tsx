@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useRef, useState, type DragEvent, type ChangeEvent } from 'react'
+import React, { useCallback, useRef, useState, type DragEvent, type ChangeEvent } from 'react'
 import { Upload, Image as ImageIcon, X, AlertCircle, FileCheck, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/cn'

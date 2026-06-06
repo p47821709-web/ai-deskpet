@@ -1,4 +1,4 @@
-﻿export class SpeechBubble {
+export class SpeechBubble {
   constructor() {}
   show(text: string) {}
   hide() {}

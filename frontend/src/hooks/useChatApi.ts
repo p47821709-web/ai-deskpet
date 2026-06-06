@@ -1,4 +1,4 @@
-﻿import { useCallback, useState } from 'react'
+import { useCallback, useState } from 'react'
 import apiClient from '../services/api/client'
 import type { Message } from '../stores/MessageStore'
 

@@ -1,4 +1,4 @@
-﻿export class EmotionRenderer {
+export class EmotionRenderer {
   constructor() {}
   setEmotion(emotion: string) {}
   showEmotionBubble(text: string) {}

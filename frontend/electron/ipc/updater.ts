@@ -1,4 +1,4 @@
-﻿import { ipcMain } from 'electron'
+import { ipcMain } from 'electron'
 
 export function registerUpdaterIPC() {
   ipcMain.handle('check-update', async () => {

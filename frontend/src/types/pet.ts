@@ -1,4 +1,4 @@
-﻿export interface Pet {
+export interface Pet {
   id: string
   userId: string
   name: string

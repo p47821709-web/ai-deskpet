@@ -1,4 +1,4 @@
-﻿'''
+'''
 Prompt templates for AI pixel art desktop pet generation.
 Provides structured prompts for both vision analysis and image generation steps.
 '''

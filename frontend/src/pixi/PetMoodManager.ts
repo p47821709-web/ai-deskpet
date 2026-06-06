@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PetMoodManager — 桌宠主动互动模块
  *
  * Manages the pet's internal mood state and randomly triggers

@@ -1,1 +1,1 @@
-﻿export { DEFAULT_SETTINGS } from '../services/SettingsService'
+export { DEFAULT_SETTINGS } from '../services/SettingsService'

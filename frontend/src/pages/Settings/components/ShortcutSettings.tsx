@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 
 const SHORTCUTS = [
   { keys: ['Ctrl', 'Shift', 'P'], desc: '显示/隐藏桌宠' },

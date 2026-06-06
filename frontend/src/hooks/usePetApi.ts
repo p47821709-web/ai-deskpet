@@ -1,4 +1,4 @@
-﻿export function usePetApi() {
+export function usePetApi() {
   return {
     fetchPets: async () => [],
     getPet: async (id: string) => null,

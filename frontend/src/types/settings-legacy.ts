@@ -1,4 +1,4 @@
-﻿export interface AIModelConfig {
+export interface AIModelConfig {
   id: string
   provider: string
   modelName: string

@@ -1,4 +1,4 @@
-﻿import type { AppSettings } from '../services/SettingsService'
+import type { AppSettings } from '../services/SettingsService'
 
 export type { AppSettings } from '../services/SettingsService'
 export type {

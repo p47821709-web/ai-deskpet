@@ -1,4 +1,4 @@
-﻿import { ipcMain, app } from 'electron'
+import { ipcMain, app } from 'electron'
 
 export function registerTrayIPC() {
   ipcMain.on('minimize-to-tray', () => {

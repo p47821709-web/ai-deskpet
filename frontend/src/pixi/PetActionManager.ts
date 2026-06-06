@@ -1,4 +1,4 @@
-﻿import * as PIXI from 'pixi.js'
+import * as PIXI from 'pixi.js'
 import { PetState, PetStateType, type PetAction } from './PetState'
 
 // ── Types ────────────────────────────────────────────────────
