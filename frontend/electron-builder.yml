@@ -1,0 +1,76 @@
+# ── Electron Builder 生产配置 ────────────────────────────────────
+# 用于 Windows 安装包构建、代码签名、自动更新
+
+appId: com.aideskpet.app
+productName: AI DeskPet
+copyright: Copyright © 2026 AI DeskPet
+
+directories:
+  buildResources: resources
+  output: release
+  app: .
+
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - package.json
+
+extraResources:
+  - from: ../assets
+    to: assets
+    filter:
+      - "**/*"
+  - from: ../config
+    to: config
+    filter:
+      - "**/*"
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  icon: resources/icon.ico
+  artifactName: "AI-DeskPet-${version}-${arch}.${ext}"
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: AI DeskPet
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
+  installerHeaderIcon: resources/icon.ico
+  license: LICENSE
+  language: 2052
+  multiLanguageInstaller: true
+  installerLanguages:
+    - zh_CN
+    - en_US
+  uninstallDisplayName: "AI DeskPet ${version}"
+  installerSidebar: null
+  include: "build/installer.nsh"
+
+portable:
+  artifactName: "AI-DeskPet-${version}-portable-${arch}.${ext}"
+
+publish:
+  - provider: github
+    owner: p47821709-web
+    repo: ai-deskpet
+    releaseType: release
+    vPrefixedTagName: true
+    private: false
+
+compression: maximum
+removePackageScripts: true
+npmRebuild: true
+
+electronDownload:
+  mirror: https://npmmirror.com/mirrors/electron/

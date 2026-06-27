@@ -1,0 +1,17 @@
+﻿node_modules/
+dist/
+dist-electron/
+release/
+logs/
+.env
+*.pyc
+__pycache__/
+*.egg-info/
+.DS_Store
+*.db
+*.sqlite3
+coverage/
+.vite/
+out/
+新建文件夹/
+新建文件夹.*

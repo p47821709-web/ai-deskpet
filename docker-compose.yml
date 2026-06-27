@@ -1,0 +1,14 @@
+﻿version: '3.8'
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/deskpet.db
+      - STORAGE_DIR=/app/data/storage
+    restart: unless-stopped

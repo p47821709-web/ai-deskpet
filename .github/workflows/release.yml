@@ -1,0 +1,115 @@
+﻿# ── AI DeskPet 发布流水线 ────────────────────────────────────
+# 打标签时自动构建 Windows 安装包并发布到 GitHub Releases
+
+name: Build & Release
+
+env:
+  ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+  ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
+  NODE_OPTIONS: --max-old-space-size=4096
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  # ═══════════════════════════════════════════════════════════
+  # 构建 Windows 安装包
+  # ═══════════════════════════════════════════════════════════
+  build-windows:
+    name: Build Windows (x64)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Compile Electron main process (TypeScript)
+        working-directory: frontend
+        run: npx tsc -p tsconfig.electron.json
+
+      - name: Build renderer (Vite)
+        working-directory: frontend
+        run: npx vite build
+        env:
+          NODE_ENV: production
+
+      - name: Build Electron (NSIS + Portable)
+        working-directory: frontend
+        run: npx electron-builder --config electron-builder.yml --win --x64 --publish=never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload NSIS Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: frontend/release/AI-DeskPet-*.exe
+          if-no-files-found: error
+
+      - name: Upload Portable
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-portable
+          path: frontend/release/AI-DeskPet-*-portable-*.exe
+          if-no-files-found: error
+
+      - name: Upload Update Metadata (latest.yml)
+        uses: actions/upload-artifact@v4
+        with:
+          name: update-metadata
+          path: frontend/release/latest*
+          if-no-files-found: warn
+
+  # ═══════════════════════════════════════════════════════════
+  # 创建 GitHub Release
+  # ═══════════════════════════════════════════════════════════
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build-windows
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate release notes from CHANGELOG
+        run: |
+          awk "/^## /{c++} c==1{print} c>1{exit}" CHANGELOG.md > release-notes.md
+          echo "=== Release Notes ==="
+          cat release-notes.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "AI DeskPet v${{ github.ref_name }}"
+          body_path: release-notes.md
+          files: |
+            windows-installer/*.exe
+            windows-portable/*.exe
+            update-metadata/latest*
+          draft: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
