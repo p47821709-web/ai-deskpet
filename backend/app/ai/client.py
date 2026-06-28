@@ -122,12 +122,19 @@ class AIUnifiedClient:
             return content
 
         except httpx.HTTPStatusError as exc:
+            status_code = exc.response.status_code
             logger.error(
                 'Vision API error: status=%d, body=%s',
-                exc.response.status_code, exc.response.text,
+                status_code, exc.response.text,
             )
+            if status_code == 401:
+                raise FileUploadException(
+                    f'AI 鉴权失败 (401): API Key 无效或未授权。'
+                    f'请检查设置中的 API Key 是否正确，'
+                    f'并确认在火山引擎控制台已开通 {self.model} 模型的访问权限。',
+                ) from exc
             raise FileUploadException(
-                f'AI vision analysis failed: {exc.response.status_code}',
+                f'AI vision analysis failed: {status_code}',
             ) from exc
 
         except httpx.RequestError as exc:
@@ -207,12 +214,20 @@ class AIUnifiedClient:
             return image_bytes
 
         except httpx.HTTPStatusError as exc:
+            status_code = exc.response.status_code
             logger.error(
                 'Image generation API error: status=%d, body=%s',
-                exc.response.status_code, exc.response.text,
+                status_code, exc.response.text,
             )
+            if status_code == 401:
+                raise FileUploadException(
+                    f'AI 鉴权失败 (401): API Key 无效或未授权。'
+                    f'请检查设置中的 API Key 是否正确，'
+                    f'并确认在火山引擎控制台已开通 {self.image_model} 模型的访问权限。'
+                    f'（控制台: https://console.volcengine.com/ark/region:ark+cn-beijing/openManagement）',
+                ) from exc
             raise FileUploadException(
-                f'AI image generation failed: {exc.response.status_code}',
+                f'AI image generation failed: {status_code}',
             ) from exc
 
         except httpx.RequestError as exc:

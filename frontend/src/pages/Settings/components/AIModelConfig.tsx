@@ -125,7 +125,7 @@ export default function AIModelConfig() {
           <Input
             value={ai.aiImageModel}
             onChange={(e) => updateAI({ aiImageModel: e.target.value })}
-            placeholder={ai.aiProvider === 'openai' ? 'dall-e-3' : ai.aiProvider === 'doubao' ? 'doubao-seedream-4-0-250828' : '不支持'}
+            placeholder={ai.aiProvider === 'openai' ? 'dall-e-3' : ai.aiProvider === 'doubao' ? 'doubao-seedream-5-0-260128' : '不支持'}
           />
           {ai.aiProvider === 'deepseek' && (
             <p className="text-[11px] text-muted-foreground/60">

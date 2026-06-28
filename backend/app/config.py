@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     # Doubao / 火山方舟 defaults
     doubao_api_base: str = 'https://ark.cn-beijing.volces.com/api/v3'
     doubao_vision_model: str = 'doubao-vision-pro-32k'
-    doubao_image_model: str = 'doubao-seedream-4-0-250828'
+    doubao_image_model: str = 'doubao-seedream-5-0-260128'
 
     # Server
     backend_host: str = '0.0.0.0'

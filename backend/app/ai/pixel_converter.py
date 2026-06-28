@@ -113,7 +113,9 @@ class PixelConverter:
         )
 
         # Step 2: Generate pixel art
-        image_size: str = self._resolve_image_size(pixel_size)
+        image_size: str = self._resolve_image_size(
+            pixel_size, self.provider_config.provider,
+        )
         generation_prompt: str = prompt.build_generation_prompt(analysis_result)
 
         logger.info(
@@ -208,11 +210,17 @@ class PixelConverter:
         return self._client
 
     @staticmethod
-    def _resolve_image_size(pixel_size: int) -> str:
+    def _resolve_image_size(pixel_size: int, provider: str = '') -> str:
         '''
         Map pixel art size to image generation resolution.
         The generated image is larger and downscaled for pixel-perfect results.
+
+        Doubao Seedream 5.0 requires minimum 2048x2048 (total pixels >= 3686400).
         '''
+        if provider == 'doubao':
+            # Seedream 5.0 minimum: 2048x2048 (1:1 aspect ratio)
+            return '2048x2048'
+
         mapping: dict[int, str] = {
             16: '512x512',
             24: '768x768',
