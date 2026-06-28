@@ -83,7 +83,7 @@ function createTray() {
     { type: 'separator' },
     { label: '退出', click: () => { _isQuitting = true; app.quit() } },
   ])
-  tray.setToolTip('AI DeskPet')
+  tray.setToolTip('AI 桌宠')
   tray.setContextMenu(contextMenu)
   tray.on('click', () => mainWindow?.show())
 }

@@ -21,7 +21,6 @@ export default function ChatBubble({
     ? new Date(timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
     : ''
 
-  // Render emoji for assistant messages
   const emotionEmoji = emotionToEmoji(emotion)
 
   return (
@@ -31,7 +30,7 @@ export default function ChatBubble({
         isUser ? 'ml-auto flex-row-reverse' : '',
       )}
     >
-      {/* Avatar */}
+      {/* 头像 */}
       <div
         className={cn(
           'w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs',
@@ -43,7 +42,7 @@ export default function ChatBubble({
         {isUser ? '👤' : '🐾'}
       </div>
 
-      {/* Bubble */}
+      {/* 气泡 */}
       <div
         className={cn(
           'rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed break-words',
@@ -53,19 +52,19 @@ export default function ChatBubble({
           isStreaming ? 'border border-primary/20' : '',
         )}
       >
-        {/* Emotion tag */}
+        {/* 情绪标签 */}
         {!isUser && emotion && !isStreaming && (
           <span className="block text-[11px] text-muted-foreground/60 mb-1">
             {emotionEmoji} {emotion}
           </span>
         )}
 
-        {/* Message content */}
+        {/* 消息内容 */}
         <div className="whitespace-pre-wrap">
           {renderContent(content, isStreaming)}
         </div>
 
-        {/* Timestamp */}
+        {/* 时间戳 */}
         {timeStr && !isStreaming && (
           <span
             className={cn(
@@ -77,7 +76,7 @@ export default function ChatBubble({
           </span>
         )}
 
-        {/* Streaming cursor */}
+        {/* 流式光标 */}
         {isStreaming && (
           <span className="inline-block w-1.5 h-4 bg-primary ml-0.5 animate-pulse align-text-bottom" />
         )}
@@ -86,10 +85,9 @@ export default function ChatBubble({
   )
 }
 
-// ── Helpers ──────────────────────────────────────────────────
+// ── 辅助函数 ──────────────────────────────────────────────────
 
-function renderContent(content: string, isStreaming: boolean): React.ReactNode {
-  // Split by code blocks
+function renderContent(content: string, _isStreaming: boolean): React.ReactNode {
   const parts = content.split(/(```[\s\S]*?```)/g)
   if (parts.length === 1) {
     return content

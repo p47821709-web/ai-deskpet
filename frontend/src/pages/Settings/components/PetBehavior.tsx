@@ -11,7 +11,7 @@ export default function PetBehavior() {
 
   return (
     <div className="space-y-8">
-      {/* Identity */}
+      {/* 桌宠身份 */}
       <section>
         <h3 className="text-sm font-semibold mb-4">桌宠身份</h3>
         <div className="space-y-4">
@@ -28,7 +28,7 @@ export default function PetBehavior() {
         </div>
       </section>
 
-      {/* Size */}
+      {/* 桌宠大小 */}
       <section>
         <h3 className="text-sm font-semibold mb-4">桌宠大小</h3>
         <div className="space-y-3">
@@ -49,7 +49,7 @@ export default function PetBehavior() {
             />
             <span className="text-xs text-muted-foreground">大</span>
           </div>
-          {/* Preview */}
+          {/* 预览 */}
           <div className="flex items-center justify-center py-6 bg-muted/20 rounded-xl border border-border">
             <div
               className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center transition-all"
@@ -61,7 +61,7 @@ export default function PetBehavior() {
         </div>
       </section>
 
-      {/* Volume */}
+      {/* 音量 */}
       <section>
         <h3 className="text-sm font-semibold mb-4">音量</h3>
         <div className="space-y-3">

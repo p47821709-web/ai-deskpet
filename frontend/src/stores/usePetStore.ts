@@ -1,25 +1,39 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
-interface PetState {
-  activePetId: string | null
-  currentEmotion: string
-  position: { x: number; y: number }
-  affection: number
-  energy: number
-  mood: number
-  setActivePet: (id: string | null) => void
-  setEmotion: (emotion: string) => void
-  updatePosition: (x: number, y: number) => void
+export interface StoredPet {
+  id: string
+  name: string
+  imageUrl: string
+  style: string
+  pixelSize: number
+  createdAt: string
+  interactions: number
+  lastInteraction: string
 }
 
-export const usePetStore = create<PetState>((set) => ({
-  activePetId: null,
-  currentEmotion: 'neutral',
-  position: { x: 100, y: 100 },
-  affection: 50,
-  energy: 80,
-  mood: 60,
-  setActivePet: (id) => set({ activePetId: id }),
-  setEmotion: (emotion) => set({ currentEmotion: emotion }),
-  updatePosition: (x, y) => set({ position: { x, y } }),
-}))
+interface PetStoreState {
+  pets: StoredPet[]
+  addPet: (pet: StoredPet) => void
+  removePet: (id: string) => void
+  getPet: (id: string) => StoredPet | undefined
+}
+
+export const usePetStore = create<PetStoreState>()(
+  persist(
+    (set, get) => ({
+      pets: [],
+
+      addPet: (pet: StoredPet) =>
+        set((state) => ({ pets: [...state.pets, pet] })),
+
+      removePet: (id: string) =>
+        set((state) => ({ pets: state.pets.filter((p) => p.id !== id) })),
+
+      getPet: (id: string) => get().pets.find((p) => p.id === id),
+    }),
+    {
+      name: 'ai_deskpet_pets',
+    },
+  ),
+)

@@ -29,7 +29,7 @@ export default function ChatWindow({
     error,
   } = useMessageStore()
 
-  // Auto-scroll to bottom when new messages arrive
+  // 自动滚动到底部
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
@@ -43,7 +43,7 @@ export default function ChatWindow({
       className={`flex flex-col h-full bg-background rounded-xl border border-border shadow-xl overflow-hidden ${className}`}
       data-chat-window
     >
-      {/* ── Header ── */}
+      {/* 顶部栏 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="relative w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -55,7 +55,7 @@ export default function ChatWindow({
           <div>
             <h3 className="text-sm font-semibold leading-tight">{petName}</h3>
             <p className="text-[11px] text-muted-foreground">
-              {isStreaming ? '输入中...' : '在线'}
+              {isStreaming ? '正在输入...' : '在线'}
             </p>
           </div>
         </div>
@@ -76,7 +76,7 @@ export default function ChatWindow({
         </div>
       </div>
 
-      {/* ── Messages ── */}
+      {/* 消息列表 */}
       <div
         ref={containerRef}
         className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scroll-smooth"
@@ -101,7 +101,7 @@ export default function ChatWindow({
           />
         ))}
 
-        {/* Streaming indicator */}
+        {/* 流式输出中 */}
         {isStreaming && streamingContent && (
           <ChatBubble
             role="assistant"
@@ -110,7 +110,7 @@ export default function ChatWindow({
           />
         )}
 
-        {/* Typing dots when streaming just started but no content yet */}
+        {/* 等待中动画 */}
         {isStreaming && !streamingContent && (
           <div className="flex items-start gap-2">
             <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-xs">
@@ -118,15 +118,15 @@ export default function ChatWindow({
             </div>
             <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
               <div className="flex gap-1">
-                <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce [animation-delay:0ms]" />
-                <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce [animation-delay:150ms]" />
-                <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce [animation-delay:300ms]" />
+                <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
         )}
 
-        {/* Error message */}
+        {/* 错误提示 */}
         {error && (
           <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/20 text-xs text-destructive">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-0.5 shrink-0">
@@ -140,7 +140,7 @@ export default function ChatWindow({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ── Input ── */}
+      {/* 输入框 */}
       <div className="shrink-0 border-t border-border bg-muted/20 px-4 py-3">
         <ChatInput
           onSend={onSendMessage}

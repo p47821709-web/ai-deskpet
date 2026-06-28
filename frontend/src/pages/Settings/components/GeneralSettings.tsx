@@ -12,7 +12,7 @@ export default function GeneralSettings() {
 
   return (
     <div className="space-y-8">
-      {/* Display */}
+      {/* 显示 */}
       <section>
         <h3 className="text-sm font-semibold mb-4">显示</h3>
         <div className="space-y-4">
@@ -49,7 +49,7 @@ export default function GeneralSettings() {
             />
           </div>
 
-          {/* Opacity slider */}
+          {/* 透明度滑块 */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">透明度</p>
@@ -69,7 +69,7 @@ export default function GeneralSettings() {
         </div>
       </section>
 
-      {/* System */}
+      {/* 系统 */}
       <section>
         <h3 className="text-sm font-semibold mb-4">系统</h3>
         <div className="space-y-4">
@@ -97,7 +97,7 @@ export default function GeneralSettings() {
         </div>
       </section>
 
-      {/* Danger zone */}
+      {/* 数据管理 */}
       <section className="pt-4 border-t border-border">
         <h3 className="text-sm font-semibold text-destructive mb-2">数据管理</h3>
         <p className="text-xs text-muted-foreground mb-3">
