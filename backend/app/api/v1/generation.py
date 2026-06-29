@@ -1,18 +1,13 @@
-﻿import os
+import os
 import uuid
 import logging
 
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Body
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, UploadFile, File, Body
 
-from app.schemas.generation import (
-    UploadResponse,
-    PixelArtGenerateRequest,
-    PixelArtGenerateResponse,
-)
+from app.schemas.generation import PixelArtGenerateRequest
 from app.storage.local import LocalStorage
 from app.storage.thumbnail import ThumbnailGenerator
-from app.ai.pixel_converter import PixelConverter, ProviderConfig
+from app.ai.pixel_converter import PixelConverter, ImageProviderConfig
 from app.core.exceptions import (
     FileUploadException,
     FileTooLargeException,
@@ -113,15 +108,7 @@ async def create_pixel_art(
     '''
     Generate a pixel art desktop pet from an uploaded image.
 
-    Accepts a file_url from the /upload endpoint, analyzes the image
-    using a vision-capable LLM, then generates a pixel art sprite.
-
-    AI provider can be configured via request body fields:
-    - ai_provider: 'openai' (default) or 'deepseek'
-    - ai_model: vision model name (default: gpt-4o)
-    - ai_image_model: image generation model (default: dall-e-3)
-    - ai_api_base: custom API base URL
-    - ai_api_key: API key (or use env var)
+    Uploaded image is used as reference for direct image-to-image generation.
     '''
     job_id: str = uuid.uuid4().hex
     logger.info(
@@ -139,23 +126,24 @@ async def create_pixel_art(
 
     logger.info('Source image resolved: %s', source_path)
 
-    provider_config: ProviderConfig = ProviderConfig(
-        provider=(request.ai_provider or settings.ai_default_provider),
-        api_key=(request.ai_api_key or ''),
-        api_base=(request.ai_api_base or settings.ai_default_api_base),
-        model=(request.ai_model or settings.ai_default_model),
-        image_model=(request.ai_image_model or settings.ai_default_image_model),
+    # ── 构建图片生成配置 ──
+    image_provider: str = (
+        request.image_provider
+        or settings.ai_default_provider
+    )
+    image_config: ImageProviderConfig = ImageProviderConfig(
+        provider=image_provider,
+        api_key=request.image_api_key or '',
+        api_base=request.image_api_base or settings.ai_default_api_base,
+        model=request.image_model or settings.ai_default_image_model,
     )
 
     logger.info(
-        'Using AI provider: provider=%s, model=%s, image_model=%s, api_base=%s',
-        provider_config.provider,
-        provider_config.model,
-        provider_config.image_model,
-        provider_config.api_base,
+        'Using image config: %s(%s)',
+        image_config.provider, image_config.model,
     )
 
-    converter: PixelConverter = PixelConverter(provider_config=provider_config)
+    converter: PixelConverter = PixelConverter(image_config=image_config)
 
     try:
         result = await converter.convert(
@@ -184,9 +172,8 @@ async def create_pixel_art(
             'generated_image_url': result.file_url,
             'preview_url': result.file_url,
             'pixel_size': result.pixel_size,
-            'provider': result.provider,
-            'model': result.model,
-            'analysis_text': result.analysis_text,
+            'image_provider': result.image_provider,
+            'image_model': result.image_model,
         },
     }
 
@@ -248,5 +235,3 @@ def _resolve_storage_path(file_url: str) -> str:
 def _get_date_prefix() -> str:
     from app.utils.date_utils import date_subdir
     return date_subdir()
-
-

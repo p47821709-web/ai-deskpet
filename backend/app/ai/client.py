@@ -150,9 +150,11 @@ class AIUnifiedClient:
         prompt: str,
         size: str = '1024x1024',
         negative_prompt: Optional[str] = None,
+        reference_image_path: Optional[str] = None,
     ) -> bytes:
         '''
         Generate an image using the provider's image generation endpoint.
+        Optionally accepts a reference image for image-to-image generation.
         Returns raw PNG bytes.
         '''
         if not self.supports_image_generation:
@@ -174,6 +176,11 @@ class AIUnifiedClient:
 
         if negative_prompt:
             payload['negative_prompt'] = negative_prompt
+
+        if reference_image_path:
+            ref_b64 = self._encode_image(reference_image_path)
+            payload['image'] = f'data:image/png;base64,{ref_b64}'
+            logger.info('Reference image attached: %s', reference_image_path)
 
         logger.info(
             'Sending image generation request: model=%s, size=%s',

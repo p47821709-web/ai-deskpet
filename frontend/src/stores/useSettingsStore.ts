@@ -3,7 +3,8 @@ import {
   SettingsService,
   type AppSettings,
   type PetSettings,
-  type AISettings,
+  type ChatAISettings,
+  type ImageAISettings,
   type SystemSettings,
   type DisplaySettings,
   DEFAULT_SETTINGS,
@@ -16,7 +17,8 @@ interface SettingsStoreState extends AppSettings {
   // ── Actions ──
   initialize: () => void
   updatePet: (partial: Partial<PetSettings>) => void
-  updateAI: (partial: Partial<AISettings>) => void
+  updateChatAI: (partial: Partial<ChatAISettings>) => void
+  updateImageAI: (partial: Partial<ImageAISettings>) => void
   updateSystem: (partial: Partial<SystemSettings>) => void
   updateDisplay: (partial: Partial<DisplaySettings>) => void
   resetAll: () => void
@@ -43,11 +45,18 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     SettingsService.set('pet', updated)
   },
 
-  updateAI: (partial) => {
-    const current = get().ai
+  updateChatAI: (partial) => {
+    const current = get().chatAI
     const updated = { ...current, ...partial }
-    set({ ai: updated })
-    SettingsService.set('ai', updated)
+    set({ chatAI: updated })
+    SettingsService.set('chatAI', updated)
+  },
+
+  updateImageAI: (partial) => {
+    const current = get().imageAI
+    const updated = { ...current, ...partial }
+    set({ imageAI: updated })
+    SettingsService.set('imageAI', updated)
   },
 
   updateSystem: (partial) => {

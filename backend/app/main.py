@@ -1,12 +1,23 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+
 from app.api.v1.router import api_router
 from app.core.exception_handler import register_exception_handlers
+from app.core.database import init_db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    yield
+
 
 app = FastAPI(
     title='AI DeskPet API',
     version='1.0.0',
     description='AI DeskPet Backend API',
+    lifespan=lifespan,
 )
 
 app.add_middleware(

@@ -19,16 +19,34 @@ export interface PetSettings {
   petVolume: number
 }
 
-export interface AISettings {
+export interface ChatAISettings {
   /** 供应商: 'openai' | 'deepseek' | 'doubao' | 'custom' */
-  aiProvider: string
+  provider: string
   /** API 地址 */
-  aiApiBase: string
+  apiBase: string
   /** API Key */
-  aiApiKey: string
+  apiKey: string
   /** 模型名称 */
+  model: string
+}
+
+export interface ImageAISettings {
+  /** 供应商: 'openai' | 'doubao' | 'custom' */
+  provider: string
+  /** API 地址 */
+  apiBase: string
+  /** API Key */
+  apiKey: string
+  /** 生图模型名称 */
+  model: string
+}
+
+// 旧版 AISettings（保留用于迁移兼容）
+export interface AISettings {
+  aiProvider: string
+  aiApiBase: string
+  aiApiKey: string
   aiModel: string
-  /** 图片生成模型名称 */
   aiImageModel: string
 }
 
@@ -52,7 +70,8 @@ export interface DisplaySettings {
 
 export interface AppSettings {
   pet: PetSettings
-  ai: AISettings
+  chatAI: ChatAISettings
+  imageAI: ImageAISettings
   system: SystemSettings
   display: DisplaySettings
 }
@@ -65,12 +84,17 @@ export const DEFAULT_SETTINGS: AppSettings = {
     petScale: 3,
     petVolume: 70,
   },
-  ai: {
-    aiProvider: 'openai',
-    aiApiBase: 'https://api.openai.com/v1',
-    aiApiKey: '',
-    aiModel: 'gpt-4o-mini',
-    aiImageModel: 'dall-e-3',
+  chatAI: {
+    provider: 'deepseek',
+    apiBase: 'https://api.deepseek.com',
+    apiKey: '',
+    model: 'deepseek-chat',
+  },
+  imageAI: {
+    provider: 'doubao',
+    apiBase: 'https://ark.cn-beijing.volces.com/api/v3',
+    apiKey: '',
+    model: 'doubao-seedream-5-0-260128',
   },
   system: {
     autoLaunch: false,
@@ -231,11 +255,11 @@ class SettingsServiceClass {
     const oldModel = localStorage.getItem('ai_model')
     if (oldApiKey || oldApiBase || oldModel) {
       migrated = true
-      current.ai = {
-        ...current.ai,
-        aiApiKey: oldApiKey || current.ai.aiApiKey,
-        aiApiBase: oldApiBase || current.ai.aiApiBase,
-        aiModel: oldModel || current.ai.aiModel,
+      current.chatAI = {
+        ...current.chatAI,
+        apiKey: oldApiKey || current.chatAI.apiKey,
+        apiBase: oldApiBase || current.chatAI.apiBase,
+        model: oldModel || current.chatAI.model,
       }
       localStorage.removeItem('ai_api_key')
       localStorage.removeItem('ai_api_base')
@@ -287,9 +311,7 @@ class SettingsServiceClass {
 
   /** 应用设置的副作用（如同步到 Electron IPC） */
   private _applySideEffects(path: string, value: unknown): void {
-    if (path === 'ai.aiApiKey' && typeof value === 'string') {
-      // ChatService 会通过 get() 读取，无需额外操作
-    }
+    // ChatService 会通过 get() 读取，无需额外操作
   }
 }
 

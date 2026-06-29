@@ -8,6 +8,7 @@ import GenerationPreview from './components/GenerationPreview'
 import { generatePixelArt, type UploadResult, type GenerateResult } from '@/services/api/generationApi'
 import { petApi } from '@/services/api/petApi'
 import { ipcBridge } from '@/services/ipc-bridge'
+import { useSettingsStore } from '@/stores/useSettingsStore'
 
 export default function PetCreator() {
   const [file, setFile] = useState<File | null>(null)
@@ -22,6 +23,9 @@ export default function PetCreator() {
 
   // 召唤状态
   const [spawning, setSpawning] = useState(false)
+
+  // 读取生图 AI 配置
+  const imageAI = useSettingsStore((s) => s.imageAI)
 
   const handleFileSelected = useCallback((selectedFile: File, url: string) => {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
@@ -64,6 +68,10 @@ export default function PetCreator() {
         file_url: uploadResult.file_url,
         pixel_size: 32,
         style,
+        image_provider: imageAI.provider,
+        image_model: imageAI.model,
+        image_api_base: imageAI.apiBase,
+        image_api_key: imageAI.apiKey,
       })
       setGenResult(result)
       setGenState('success')
@@ -86,7 +94,7 @@ export default function PetCreator() {
       setGenState('error')
       console.error('[PetCreator] Generation failed:', msg)
     }
-  }, [uploadResult, style])
+  }, [uploadResult, style, imageAI])
 
   const handleSpawnToDesktop = useCallback((_imageUrl: string) => {
     setSpawning(true)

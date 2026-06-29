@@ -21,30 +21,30 @@ export default function ChatPage() {
   const pet = usePetStore((s) => s.getPet(petId))
   const petName = pet?.name || '小咪'
 
-  // 从 SettingsStore 读取 AI 配置
-  const aiProvider = useSettingsStore((s) => s.ai.aiProvider)
-  const aiApiKey = useSettingsStore((s) => s.ai.aiApiKey)
-  const aiApiBase = useSettingsStore((s) => s.ai.aiApiBase)
-  const aiModel = useSettingsStore((s) => s.ai.aiModel)
+  // 从 SettingsStore 读取对话 AI 配置
+  const chatProvider = useSettingsStore((s) => s.chatAI.provider)
+  const chatApiKey = useSettingsStore((s) => s.chatAI.apiKey)
+  const chatApiBase = useSettingsStore((s) => s.chatAI.apiBase)
+  const chatModel = useSettingsStore((s) => s.chatAI.model)
 
   // 初始化 ChatService
   useEffect(() => {
     if (!chatServiceRef.current) {
       chatServiceRef.current = new ChatService({
-        provider: (aiProvider as 'openai' | 'deepseek' | 'doubao') || 'openai',
-        apiKey: aiApiKey || '',
-        apiBase: aiApiBase || 'https://api.openai.com/v1',
-        model: aiModel || 'gpt-4o-mini',
+        provider: (chatProvider as 'openai' | 'deepseek' | 'doubao') || 'deepseek',
+        apiKey: chatApiKey || '',
+        apiBase: chatApiBase || 'https://api.deepseek.com',
+        model: chatModel || 'deepseek-chat',
       })
     }
 
     chatServiceRef.current.updateConfig({
-      provider: (aiProvider as 'openai' | 'deepseek' | 'doubao') || 'openai',
-      apiKey: aiApiKey || '',
-      apiBase: aiApiBase || 'https://api.openai.com/v1',
-      model: aiModel || 'gpt-4o-mini',
+      provider: (chatProvider as 'openai' | 'deepseek' | 'doubao') || 'deepseek',
+      apiKey: chatApiKey || '',
+      apiBase: chatApiBase || 'https://api.deepseek.com',
+      model: chatModel || 'deepseek-chat',
     })
-  }, [petId, aiProvider, aiApiKey, aiApiBase, aiModel])
+  }, [petId, chatProvider, chatApiKey, chatApiBase, chatModel])
 
   const handleSendMessage = useCallback(
     (content: string) => {

@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 dist/
 dist-electron/
 release/
@@ -15,3 +15,4 @@ coverage/
 out/
 新建文件夹/
 新建文件夹.*
+backend/data/

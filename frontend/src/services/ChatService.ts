@@ -123,10 +123,11 @@ export class ChatService {
       await this._streamFromAPI(apiMessages, this._abortController.signal)
 
       // Finalize the streaming message
+      // Capture content BEFORE finalizeStreaming() clears it
+      const finalContent = useMessageStore.getState().streamingContent
       store.finalizeStreaming()
 
       // Add the complete message to history
-      const finalContent = useMessageStore.getState().streamingContent
       if (finalContent) {
         const assistantMessage: Message = {
           id: `msg_${Date.now()}_assistant`,

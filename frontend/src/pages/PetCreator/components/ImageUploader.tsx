@@ -47,6 +47,29 @@ export default function ImageUploader({
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadErrorMsg, setUploadErrorMsg] = useState('')
 
+  const handleUpload = useCallback(
+    async (file: File) => {
+      setUploadState('uploading')
+      setUploadProgress(0)
+      setUploadErrorMsg('')
+
+      try {
+        const result = await uploadImage(file, (percent) => {
+          setUploadProgress(percent)
+        })
+        setUploadState('success')
+        setUploadProgress(100)
+        onUploadSuccess?.(result)
+      } catch (err: any) {
+        setUploadState('error')
+        const msg = err?.response?.data?.message || err?.message || '上传失败，请重试'
+        setUploadErrorMsg(msg)
+        onUploadError?.(msg)
+      }
+    },
+    [onUploadSuccess, onUploadError]
+  )
+
   const validateAndSetFile = useCallback(
     (file: File) => {
       setError(null)
@@ -76,30 +99,7 @@ export default function ImageUploader({
       // 自动上传到后端
       handleUpload(file)
     },
-    [onFileSelected, onUploadSuccess, onUploadError]
-  )
-
-  const handleUpload = useCallback(
-    async (file: File) => {
-      setUploadState('uploading')
-      setUploadProgress(0)
-      setUploadErrorMsg('')
-
-      try {
-        const result = await uploadImage(file, (percent) => {
-          setUploadProgress(percent)
-        })
-        setUploadState('success')
-        setUploadProgress(100)
-        onUploadSuccess?.(result)
-      } catch (err: any) {
-        setUploadState('error')
-        const msg = err?.response?.data?.message || err?.message || '上传失败，请重试'
-        setUploadErrorMsg(msg)
-        onUploadError?.(msg)
-      }
-    },
-    [onUploadSuccess, onUploadError]
+    [onFileSelected, handleUpload]
   )
 
   const handleFileInput = useCallback(

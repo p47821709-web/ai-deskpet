@@ -2,8 +2,8 @@ import logging
 from datetime import datetime
 from typing import Optional, List
 
-from sqlalchemy.orm import Session
-from sqlalchemy import desc, or_
+from sqlalchemy import select, desc, or_
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.memory import Memory
 from app.schemas.memory import (
@@ -55,13 +55,13 @@ _CATEGORY_WEIGHTS: dict[str, float] = {
 class MemoryService:
     '''Long-term memory service with CRUD and keyword-based search.'''
 
-    def __init__(self, db: Session) -> None:
-        self.db: Session = db
+    def __init__(self, db: AsyncSession) -> None:
+        self.db: AsyncSession = db
         logger.debug('MemoryService initialized')
 
     # ── CRUD ─────────────────────────────────────────────────
 
-    def create_memory(
+    async def create_memory(
         self,
         user_id: str,
         data: MemoryCreate,
@@ -77,8 +77,8 @@ class MemoryService:
             related_entities=data.related_entities,
         )
         self.db.add(memory)
-        self.db.commit()
-        self.db.refresh(memory)
+        await self.db.commit()
+        await self.db.refresh(memory)
 
         logger.info(
             'Memory created: id=%s, type=%s, category=%s, importance=%.2f',
@@ -86,22 +86,20 @@ class MemoryService:
         )
         return memory
 
-    def get_memory(self, memory_id: str) -> Optional[Memory]:
+    async def get_memory(self, memory_id: str) -> Optional[Memory]:
         '''Get a single memory by ID.'''
-        memory = (
-            self.db.query(Memory)
-            .filter(Memory.id == memory_id)
-            .first()
+        result = await self.db.execute(
+            select(Memory).where(Memory.id == memory_id)
         )
+        memory = result.scalar_one_or_none()
         if memory:
-            # Increment recall count
             memory.recall_count = (memory.recall_count or 0) + 1
             memory.last_recalled_at = datetime.now()
-            self.db.commit()
+            await self.db.commit()
             logger.debug('Memory recalled: id=%s (count=%d)', memory.id, memory.recall_count)
         return memory
 
-    def list_memories(
+    async def list_memories(
         self,
         pet_id: str,
         category: Optional[str] = None,
@@ -110,31 +108,41 @@ class MemoryService:
         size: int = 20,
     ) -> tuple[list[Memory], int]:
         '''List memories for a pet with optional filters and pagination.'''
-        query = self.db.query(Memory).filter(Memory.pet_id == pet_id)
-
+        conditions = [Memory.pet_id == pet_id]
         if category:
-            query = query.filter(Memory.category == category)
+            conditions.append(Memory.category == category)
         if memory_type:
-            query = query.filter(Memory.memory_type == memory_type)
+            conditions.append(Memory.memory_type == memory_type)
 
-        total: int = query.count()
-        memories: list[Memory] = (
-            query
+        # Count
+        count_result = await self.db.execute(
+            select(Memory).where(*conditions)
+        )
+        total = len(count_result.scalars().all())
+
+        # Fetch
+        stmt = (
+            select(Memory)
+            .where(*conditions)
             .order_by(desc(Memory.importance), desc(Memory.created_at))
             .offset((page - 1) * size)
             .limit(size)
-            .all()
         )
+        result = await self.db.execute(stmt)
+        memories = list(result.scalars().all())
 
         return memories, total
 
-    def update_memory(
+    async def update_memory(
         self,
         memory_id: str,
         data: MemoryUpdate,
     ) -> Optional[Memory]:
         '''Update an existing memory. Returns None if not found.'''
-        memory = self.db.query(Memory).filter(Memory.id == memory_id).first()
+        result = await self.db.execute(
+            select(Memory).where(Memory.id == memory_id)
+        )
+        memory = result.scalar_one_or_none()
         if not memory:
             logger.warning('Memory not found for update: id=%s', memory_id)
             return None
@@ -143,39 +151,42 @@ class MemoryService:
         for key, value in update_data.items():
             setattr(memory, key, value)
 
-        self.db.commit()
-        self.db.refresh(memory)
+        await self.db.commit()
+        await self.db.refresh(memory)
 
         logger.info('Memory updated: id=%s, fields=%s', memory_id, list(update_data.keys()))
         return memory
 
-    def delete_memory(self, memory_id: str) -> bool:
+    async def delete_memory(self, memory_id: str) -> bool:
         '''Delete a memory. Returns True if deleted, False if not found.'''
-        memory = self.db.query(Memory).filter(Memory.id == memory_id).first()
+        result = await self.db.execute(
+            select(Memory).where(Memory.id == memory_id)
+        )
+        memory = result.scalar_one_or_none()
         if not memory:
             logger.warning('Memory not found for deletion: id=%s', memory_id)
             return False
 
-        self.db.delete(memory)
-        self.db.commit()
+        await self.db.delete(memory)
+        await self.db.commit()
         logger.info('Memory deleted: id=%s', memory_id)
         return True
 
     # ── Search ──────────────────────────────────────────────
 
-    def search_memories(
+    async def search_memories(
         self,
         request: MemorySearchRequest,
     ) -> list[MemorySearchResult]:
         '''Search memories by keyword relevance scoring.'''
-        query = self.db.query(Memory).filter(Memory.pet_id == request.pet_id)
-
+        conditions = [Memory.pet_id == request.pet_id]
         if request.category:
-            query = query.filter(Memory.category == request.category)
+            conditions.append(Memory.category == request.category)
         if request.memory_type:
-            query = query.filter(Memory.memory_type == request.memory_type)
+            conditions.append(Memory.memory_type == request.memory_type)
 
-        all_memories: list[Memory] = query.all()
+        result = await self.db.execute(select(Memory).where(*conditions))
+        all_memories: list[Memory] = list(result.scalars().all())
         if not all_memories:
             return []
 
@@ -196,7 +207,6 @@ class MemoryService:
         # Build results
         results: list[MemorySearchResult] = []
         for score, memory in top_k:
-            # Update recall stats
             memory.recall_count = (memory.recall_count or 0) + 1
             memory.last_recalled_at = datetime.now()
 
@@ -205,7 +215,7 @@ class MemoryService:
                 relevance=round(score, 4),
             ))
 
-        self.db.commit()
+        await self.db.commit()
         logger.info(
             'Memory search: query="%s", pet_id=%s, found=%d results',
             request.query, request.pet_id, len(results),
@@ -214,24 +224,23 @@ class MemoryService:
 
     # ── Convenience helpers ─────────────────────────────────
 
-    def save_user_name(self, user_id: str, pet_id: str, name: str) -> Memory:
+    async def save_user_name(self, user_id: str, pet_id: str, name: str) -> Memory:
         '''Save or update the user's preferred name.'''
-        existing = (
-            self.db.query(Memory)
-            .filter(
+        result = await self.db.execute(
+            select(Memory).where(
                 Memory.pet_id == pet_id,
                 Memory.category == 'user_name',
             )
-            .first()
         )
+        existing = result.scalar_one_or_none()
         if existing:
             existing.content = name
             existing.importance = 1.0
-            self.db.commit()
-            self.db.refresh(existing)
+            await self.db.commit()
+            await self.db.refresh(existing)
             return existing
 
-        return self.create_memory(user_id, MemoryCreate(
+        return await self.create_memory(user_id, MemoryCreate(
             pet_id=pet_id,
             memory_type='semantic',
             content=name,
@@ -240,27 +249,26 @@ class MemoryService:
             related_entities=['user'],
         ))
 
-    def save_user_interest(
+    async def save_user_interest(
         self, user_id: str, pet_id: str, interest: str, importance: float = 0.7,
     ) -> Memory:
         '''Save a user interest. Avoids duplicate entries.'''
-        existing = (
-            self.db.query(Memory)
-            .filter(
+        result = await self.db.execute(
+            select(Memory).where(
                 Memory.pet_id == pet_id,
                 Memory.category == 'user_interest',
                 Memory.content == interest,
             )
-            .first()
         )
+        existing = result.scalar_one_or_none()
         if existing:
             existing.importance = max(existing.importance, importance)
             existing.recall_count = (existing.recall_count or 0) + 1
-            self.db.commit()
-            self.db.refresh(existing)
+            await self.db.commit()
+            await self.db.refresh(existing)
             return existing
 
-        return self.create_memory(user_id, MemoryCreate(
+        return await self.create_memory(user_id, MemoryCreate(
             pet_id=pet_id,
             memory_type='semantic',
             content=interest,
@@ -269,11 +277,11 @@ class MemoryService:
             related_entities=['user'],
         ))
 
-    def save_chat_memory(
+    async def save_chat_memory(
         self, user_id: str, pet_id: str, summary: str, importance: float = 0.6,
     ) -> Memory:
         '''Save a summarized chat history entry.'''
-        return self.create_memory(user_id, MemoryCreate(
+        return await self.create_memory(user_id, MemoryCreate(
             pet_id=pet_id,
             memory_type='episodic',
             content=summary,
@@ -281,11 +289,11 @@ class MemoryService:
             importance=importance,
         ))
 
-    def save_user_preference(
+    async def save_user_preference(
         self, user_id: str, pet_id: str, preference: str, importance: float = 0.8,
     ) -> Memory:
         '''Save a user preference.'''
-        return self.create_memory(user_id, MemoryCreate(
+        return await self.create_memory(user_id, MemoryCreate(
             pet_id=pet_id,
             memory_type='semantic',
             content=preference,

@@ -2,7 +2,7 @@ import io
 import os
 import uuid
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 from app.ai.client import AIUnifiedClient
@@ -19,43 +19,42 @@ class GenerationResult:
     image_bytes: bytes
     file_path: str
     file_url: str
-    analysis_text: str
     pixel_size: int
-    provider: str
-    model: str
+    image_provider: str
+    image_model: str
 
 
 @dataclass
-class ProviderConfig:
-    '''Configuration for an AI provider.'''
+class ImageProviderConfig:
+    '''Configuration for the image generation AI provider.'''
     provider: str = 'openai'
     api_key: str = ''
     api_base: str = 'https://api.openai.com/v1'
-    model: str = 'gpt-4o'
-    image_model: str = 'dall-e-3'
+    model: str = 'dall-e-3'
 
 
 class PixelConverter:
     '''
     Orchestrates the AI-powered pixel art conversion pipeline:
 
-    1. Analyze the uploaded image using vision-capable LLM
+    1. Uploaded image is used as reference for image-to-image generation
     2. Generate pixel art sprite using image generation API
     3. Post-process and save the result
     '''
 
-    def __init__(self, provider_config: Optional[ProviderConfig] = None) -> None:
-        self.provider_config: ProviderConfig = provider_config or ProviderConfig()
+    def __init__(
+        self,
+        image_config: Optional[ImageProviderConfig] = None,
+    ) -> None:
+        self.image_config: ImageProviderConfig = image_config or ImageProviderConfig()
         self.generated_dir: str = os.path.join(settings.storage_dir, 'generated')
         os.makedirs(self.generated_dir, exist_ok=True)
 
-        self._client: Optional[AIUnifiedClient] = None
+        self._image_client: Optional[AIUnifiedClient] = None
 
         logger.info(
-            'PixelConverter initialized: provider=%s, model=%s, image_model=%s',
-            self.provider_config.provider,
-            self.provider_config.model,
-            self.provider_config.image_model,
+            'PixelConverter initialized: image=%s(%s)',
+            self.image_config.provider, self.image_config.model,
         )
 
     # ── Public API ──────────────────────────────────────────────
@@ -66,8 +65,8 @@ class PixelConverter:
         pixel_size: int = 32,
     ) -> GenerationResult:
         '''
-        Full conversion pipeline: analyze source image → generate pixel art.
-        Returns a GenerationResult with the output image bytes and metadata.
+        Direct image-to-image generation: use uploaded image as reference
+        to generate a pixel art desktop pet sprite.
 
         Args:
             source_image_path: Absolute path to the uploaded source image
@@ -77,66 +76,33 @@ class PixelConverter:
             GenerationResult with generated image and metadata
 
         Raises:
-            FileUploadException: If any step of the pipeline fails
+            FileUploadException: If generation fails
         '''
-        client: AIUnifiedClient = self._get_client()
-
-        # Step 1: Analyze the uploaded image
-        logger.info(
-            'Step 1/2: Analyzing source image: %s',
-            source_image_path,
-        )
-        try:
-            analysis_result: str = await client.analyze_image(
-                image_path=source_image_path,
-                system_prompt=prompt.VISION_SYSTEM_PROMPT,
-                user_prompt=prompt.VISION_USER_PROMPT,
-            )
-        except Exception as exc:
-            logger.error('Vision analysis failed: %s', exc)
-            raise FileUploadException(
-                f'Image analysis failed: {exc}',
-            ) from exc
-
-        if not analysis_result or len(analysis_result.strip()) < 50:
-            logger.error(
-                'Vision analysis returned insufficient content (len=%d)',
-                len(analysis_result or ''),
-            )
-            raise FileUploadException(
-                'AI could not analyze the image. Please try a different image.',
-            )
-
-        logger.info(
-            'Vision analysis completed: %d characters',
-            len(analysis_result),
-        )
-
-        # Step 2: Generate pixel art
+        image_client: AIUnifiedClient = self._get_image_client()
         image_size: str = self._resolve_image_size(
-            pixel_size, self.provider_config.provider,
+            pixel_size, self.image_config.provider,
         )
-        generation_prompt: str = prompt.build_generation_prompt(analysis_result)
 
         logger.info(
-            'Step 2/2: Generating pixel art (size=%s, pixel_size=%d)',
-            image_size, pixel_size,
+            'Generating pixel art: provider=%s, model=%s, size=%s, ref=%s',
+            self.image_config.provider, self.image_config.model,
+            image_size, source_image_path,
         )
 
         try:
-            if client.supports_image_generation:
-                image_bytes: bytes = await client.generate_image(
-                    prompt=generation_prompt,
+            if image_client.supports_image_generation:
+                image_bytes: bytes = await image_client.generate_image(
+                    prompt=prompt.DIRECT_GENERATION_PROMPT,
                     size=image_size,
                     negative_prompt=prompt.NEGATIVE_PROMPT,
+                    reference_image_path=source_image_path,
                 )
             else:
                 logger.warning(
                     'Provider %s has no image generation. '
-                    'Falling back to description only.',
-                    client.provider,
+                    'Falling back to placeholder.',
+                    image_client.provider,
                 )
-                # Generate a minimal placeholder for providers without image gen
                 image_bytes = self._create_placeholder_pixel_art(pixel_size)
         except FileUploadException:
             raise
@@ -170,10 +136,9 @@ class PixelConverter:
             image_bytes=image_bytes,
             file_path=file_path,
             file_url=file_url,
-            analysis_text=analysis_result,
             pixel_size=pixel_size,
-            provider=self.provider_config.provider,
-            model=self.provider_config.image_model,
+            image_provider=self.image_config.provider,
+            image_model=self.image_config.model,
         )
 
     async def convert_batch(
@@ -197,17 +162,17 @@ class PixelConverter:
 
     # ── Internal helpers ───────────────────────────────────────
 
-    def _get_client(self) -> AIUnifiedClient:
-        '''Get or create the AI client with current provider config.'''
-        if self._client is None:
-            self._client = AIUnifiedClient(
-                provider=self.provider_config.provider,
-                api_key=self.provider_config.api_key,
-                api_base=self.provider_config.api_base,
-                model=self.provider_config.model,
-                image_model=self.provider_config.image_model,
+    def _get_image_client(self) -> AIUnifiedClient:
+        '''Get or create the AI client for image generation.'''
+        if self._image_client is None:
+            self._image_client = AIUnifiedClient(
+                provider=self.image_config.provider,
+                api_key=self.image_config.api_key,
+                api_base=self.image_config.api_base,
+                model=self.image_config.model,
+                image_model=self.image_config.model,
             )
-        return self._client
+        return self._image_client
 
     @staticmethod
     def _resolve_image_size(pixel_size: int, provider: str = '') -> str:
@@ -218,7 +183,6 @@ class PixelConverter:
         Doubao Seedream 5.0 requires minimum 2048x2048 (total pixels >= 3686400).
         '''
         if provider == 'doubao':
-            # Seedream 5.0 minimum: 2048x2048 (1:1 aspect ratio)
             return '2048x2048'
 
         mapping: dict[int, str] = {
@@ -238,30 +202,26 @@ class PixelConverter:
         '''
         from PIL import Image
 
-        canvas_size: int = size * 10  # e.g., 32*10 = 320px
+        canvas_size: int = size * 10
         img = Image.new('RGBA', (canvas_size, canvas_size), (0, 0, 0, 0))
 
-        # Draw a simple pixel-style character outline
         pixels = img.load()
         if pixels is None:
-            # Fallback: return a solid color image
             img = Image.new('RGBA', (canvas_size, canvas_size), (180, 180, 180, 255))
         else:
             block: int = canvas_size // size
-            # Simple cute character shape centered in the canvas
             cx, cy = canvas_size // 2, canvas_size // 2
-            r = size // 3 * block  # head radius in pixels
+            r = size // 3 * block
 
-            # Draw circular head
             for y in range(canvas_size):
                 for x in range(canvas_size):
                     dx = x - cx
                     dy = y - cy
                     if dx * dx + dy * dy <= r * r:
-                        pixels[x, y] = (200, 200, 200, 255)  # Light gray body
+                        pixels[x, y] = (200, 200, 200, 255)
                     elif dx * dx + dy * dy <= (r + block) * (r + block):
                         if (x // block + y // block) % 2 == 0:
-                            pixels[x, y] = (100, 100, 100, 255)  # Pixel border
+                            pixels[x, y] = (100, 100, 100, 255)
 
         buf = io.BytesIO()
         img.save(buf, format='PNG')

@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     ai_default_api_base: str = 'https://api.openai.com/v1'
     ai_image_generation_size: str = '1024x1024'
 
+    # DeepSeek defaults
+    deepseek_api_base: str = 'https://api.deepseek.com'
+    deepseek_vision_model: str = 'deepseek-chat'
+
     # Doubao / 火山方舟 defaults
     doubao_api_base: str = 'https://ark.cn-beijing.volces.com/api/v3'
     doubao_vision_model: str = 'doubao-vision-pro-32k'

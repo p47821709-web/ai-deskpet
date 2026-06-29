@@ -1,5 +1,5 @@
 import React from 'react'
-import { CheckCircle, Sparkles, Monitor } from 'lucide-react'
+import { CheckCircle, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { GenerateResult } from '@/services/api/generationApi'
 
@@ -58,27 +58,14 @@ export default function GenerationPreview({
           <span>像素尺寸</span>
         </div>
         <div className="rounded-lg bg-background px-3 py-2">
-          <span className="block text-foreground font-medium capitalize">{result.provider}</span>
-          <span>AI 供应商</span>
+          <span className="block text-foreground font-medium capitalize">{result.image_provider}</span>
+          <span>生图供应商</span>
         </div>
         <div className="rounded-lg bg-background px-3 py-2 col-span-2">
-          <span className="block text-foreground font-medium truncate" title={result.model}>{result.model}</span>
-          <span>AI 模型</span>
+          <span className="block text-foreground font-medium truncate" title={result.image_model}>{result.image_model}</span>
+          <span>生图模型</span>
         </div>
       </div>
-
-      {/* Analysis text */}
-      {result.analysis_text && (
-        <div className="rounded-lg bg-background/50 border border-border/50 px-3 py-2.5">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-[11px] font-medium text-muted-foreground">AI 分析</span>
-          </div>
-          <p className="text-xs text-muted-foreground/80 leading-relaxed line-clamp-3">
-            {result.analysis_text}
-          </p>
-        </div>
-      )}
 
       {/* Action: Spawn to desktop */}
       {onSpawnToDesktop && (

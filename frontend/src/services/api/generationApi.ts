@@ -26,16 +26,25 @@ export async function uploadImage(
   return body.data as UploadResult
 }
 
-/** 生成像素风桌宠 */
+/** 生成像素风桌宠（直接图生图，无需视觉分析） */
 export async function generatePixelArt(params: {
   file_url: string
   pixel_size?: number
   style?: string
+  // 图片生成配置
+  image_provider?: string
+  image_model?: string
+  image_api_base?: string
+  image_api_key?: string
 }): Promise<GenerateResult> {
   const response = await apiClient.post('/generations/create', {
     file_url: params.file_url,
     pixel_size: params.pixel_size ?? 32,
     style: params.style ?? 'pixel_art',
+    image_provider: params.image_provider,
+    image_model: params.image_model,
+    image_api_base: params.image_api_base,
+    image_api_key: params.image_api_key,
   })
 
   const body = response.data
@@ -71,9 +80,8 @@ export interface GenerateResult {
   generated_image_url: string
   preview_url: string
   pixel_size: number
-  provider: string
-  model: string
-  analysis_text: string
+  image_provider: string
+  image_model: string
 }
 
 export interface GenerationStatus {

@@ -145,6 +145,9 @@ app.whenReady().then(() => {
   // 初始化日志系统
   logger.init()
 
+  // 去掉默认菜单栏（File Edit View Window Help）
+  Menu.setApplicationMenu(null)
+
   createMainWindow()
   createTray()
   setupIPC()
